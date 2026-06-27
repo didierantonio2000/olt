@@ -1,0 +1,18 @@
+[
+  {
+    "id": 2,
+    "name": "olt genova 2",
+    "host": "10.250.41.211",
+    "user": "admin",
+    "password": "admin",
+    "type": "http"
+  },
+  {
+    "id": 3,
+    "name": "buena vista",
+    "host": "10.251.5.11",
+    "user": "admin",
+    "password": "admin",
+    "type": "http"
+  }
+]
