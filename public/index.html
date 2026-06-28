@@ -1264,6 +1264,36 @@ let currentOntForModal = null;
 let historyChart = null;
 let ponChartPower = null, ponChartStatus = null;
 
+  const btnTop = document.getElementById("btnTop");
+
+window.addEventListener("scroll", () => {
+
+    if (window.scrollY > 300) {
+
+        btnTop.style.display = "flex";
+        btnTop.style.alignItems = "center";
+        btnTop.style.justifyContent = "center";
+
+    } else {
+
+        btnTop.style.display = "none";
+
+    }
+
+});
+
+function scrollToTop(){
+
+    window.scrollTo({
+
+        top:0,
+
+        behavior:"smooth"
+
+    });
+
+}
+
 function connectWS() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     wsConn = new WebSocket(`${proto}://${location.host}/ws`);
