@@ -6,6 +6,391 @@
   <title>SmartOLT NMS Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
+
+    /*==========================
+        TOPBAR
+==========================*/
+
+.topbar{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+
+    padding:15px 20px;
+
+    background:#0f172a;
+
+    color:#fff;
+
+    flex-wrap:wrap;
+
+    border-bottom:1px solid rgba(255,255,255,.08);
+
+}
+
+.header-left,
+.header-right{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+
+}
+
+.logo{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+}
+
+.logo-icon{
+
+    font-size:34px;
+
+}
+
+.logo h2{
+
+    margin:0;
+    font-size:22px;
+    font-weight:bold;
+
+}
+
+.logo small{
+
+    color:#94a3b8;
+
+}
+
+.olt-selector{
+
+    min-width:230px;
+
+    padding:10px 15px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#1e293b;
+
+    color:white;
+
+}
+
+/*==========================
+        BOTONES
+==========================*/
+
+.btn{
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+
+    padding:10px 16px;
+
+    border:none;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+    transition:.25s;
+
+}
+
+.btn:hover{
+
+    transform:translateY(-2px);
+
+}
+
+.btn-light{
+
+    background:#1e293b;
+    color:white;
+
+}
+
+.btn-primary{
+
+    background:#2563eb;
+    color:white;
+
+}
+
+.btn-success{
+
+    background:#16a34a;
+    color:white;
+
+}
+
+/*==========================
+      ESTADO
+==========================*/
+
+.scan-status{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    background:#1e293b;
+
+    padding:8px 14px;
+
+    border-radius:30px;
+
+}
+
+.scan-dot{
+
+    width:10px;
+    height:10px;
+
+    border-radius:50%;
+
+    background:#22c55e;
+
+    animation:pulse 1.5s infinite;
+
+}
+
+@keyframes pulse{
+
+0%{
+box-shadow:0 0 0 0 rgba(34,197,94,.8);
+}
+
+70%{
+box-shadow:0 0 0 10px transparent;
+}
+
+100%{
+box-shadow:0 0 0 0 transparent;
+}
+
+}
+
+/*==========================
+      MENU
+==========================*/
+
+.nav-wrapper{
+
+    width:100%;
+
+    overflow-x:auto;
+
+    overflow-y:hidden;
+
+    background:#111827;
+
+    scrollbar-width:thin;
+
+}
+
+.nav-wrapper::-webkit-scrollbar{
+
+    height:8px;
+
+}
+
+.nav-wrapper::-webkit-scrollbar-thumb{
+
+    background:#2563eb;
+
+    border-radius:20px;
+
+}
+
+.nav-tabs{
+
+    display:flex;
+
+    flex-wrap:nowrap;
+
+    gap:10px;
+
+    padding:12px;
+
+    min-width:max-content;
+
+}
+
+.nav-tab{
+
+    flex:0 0 auto;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:12px 18px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#1f2937;
+
+    color:white;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    white-space:nowrap;
+
+    font-weight:600;
+
+}
+
+.nav-tab:hover{
+
+    background:#2563eb;
+
+    transform:translateY(-2px);
+
+}
+
+.nav-tab.active{
+
+    background:#2563eb;
+
+    box-shadow:0 6px 18px rgba(37,99,235,.45);
+
+}
+
+.badge-count{
+
+    background:#ef4444;
+
+    color:white;
+
+    border-radius:20px;
+
+    padding:2px 8px;
+
+    font-size:12px;
+
+    font-weight:bold;
+
+}
+
+/*==========================
+      RESPONSIVE
+==========================*/
+
+@media(max-width:900px){
+
+.topbar{
+
+flex-direction:column;
+
+align-items:stretch;
+
+}
+
+.header-left,
+.header-right{
+
+justify-content:center;
+
+}
+
+.logo{
+
+justify-content:center;
+
+}
+
+.olt-selector{
+
+width:100%;
+
+}
+
+}
+
+@media(max-width:600px){
+
+.btn span{
+
+display:none;
+
+}
+
+.btn{
+
+width:45px;
+height:45px;
+padding:0;
+
+}
+
+.scan-status{
+
+width:100%;
+justify-content:center;
+
+}
+
+.nav-tab{
+
+font-size:14px;
+
+padding:10px 16px;
+
+}
+
+}
+
+@media(max-width:480px){
+
+.header-left,
+.header-right{
+
+flex-direction:column;
+
+align-items:stretch;
+
+}
+
+.btn{
+
+width:100%;
+height:auto;
+padding:12px;
+
+}
+
+.btn span{
+
+display:inline;
+
+}
+
+.olt-selector{
+
+width:100%;
+
+}
+
+}
     :root {
       --primary: #00a86b;
       --primary-dark: #007a4d;
@@ -221,34 +606,104 @@
 </head>
 <body>
 
-<header>
-  <div class="header-left">
-    <div class="logo">🌐 SmartOLT 1A-NETWORKS</div>
-    <select class="olt-selector" id="olt-select" onchange="switchOLT()"></select>
-    <button class="btn btn-secondary btn-sm" onclick="showAddOLTModal()">➕ OLT</button>
-    <button class="btn btn-secondary btn-sm" onclick="showEditOLTModal()">✏️ Editar</button>
-    <div class="scan-status">
-      <div class="scan-dot" id="scan-dot"></div>
-      <span id="scan-label">Listo</span>
+<header class="topbar">
+
+    <div class="header-left">
+
+        <div class="logo">
+            <span class="logo-icon">🌐</span>
+
+            <div class="logo-text">
+                <h2>SmartOLT</h2>
+                <small>1A-NETWORKS</small>
+            </div>
+        </div>
+
+        <select class="olt-selector" id="olt-select" onchange="switchOLT()"></select>
+
+        <button class="btn btn-light" onclick="showAddOLTModal()">
+            ➕ <span>OLT</span>
+        </button>
+
+        <button class="btn btn-light" onclick="showEditOLTModal()">
+            ✏️ <span>Editar</span>
+        </button>
+
+        <div class="scan-status">
+            <div class="scan-dot" id="scan-dot"></div>
+            <span id="scan-label">Listo</span>
+        </div>
+
     </div>
-  </div>
-  <div class="header-right">
-    <button class="btn btn-secondary btn-sm" onclick="exportCSV()">📥 CSV</button>
-    <button class="btn btn-success btn-sm" id="btn-save-local" onclick="saveLocalData()" title="Guarda el caché de ONTs y el historial de potencia en disco (ont_cache.json / power_history.json). Es opcional: mientras no lo presiones, todo funciona solo con los datos en memoria.">💾 Guardar Local</button>
-    <button class="btn btn-primary btn-sm" onclick="syncData()">🔄 Sincronizar</button>
-    <button class="btn btn-secondary btn-sm" onclick="toggleTheme()">🌙</button>
-  </div>
+
+    <div class="header-right">
+
+        <button class="btn btn-light" onclick="exportCSV()">
+            📥 <span>CSV</span>
+        </button>
+
+        <button class="btn btn-success"
+                id="btn-save-local"
+                onclick="saveLocalData()">
+            💾 <span>Guardar</span>
+        </button>
+
+        <button class="btn btn-primary"
+                onclick="syncData()">
+            🔄 <span>Sincronizar</span>
+        </button>
+
+        <button class="btn btn-light"
+                onclick="toggleTheme()">
+            🌙
+        </button>
+
+    </div>
+
 </header>
 
-<div class="nav-tabs">
-  <button class="nav-tab active" onclick="switchView('dashboard',this)">📊 Dashboard</button>
-  <button class="nav-tab" onclick="switchView('pons',this)">🔌 PONs</button>
-  <button class="nav-tab" onclick="switchView('onts',this)">📋 ONTs</button>
-  <button class="nav-tab" onclick="switchView('offline',this)">❌ Offline <span class="badge-count" id="badge-offline">0</span></button>
-  <button class="nav-tab" onclick="switchView('disconnected',this)">⚡ Desenganchadas <span class="badge-count" id="badge-disconnected">0</span></button>
-  <button class="nav-tab" onclick="switchView('unauth',this)">🔐 Autorización <span class="badge-count" id="badge-unauth">0</span></button>
-  <button class="nav-tab" onclick="switchView('authed',this)">✅ Autorizadas</button>
-  <button class="nav-tab" onclick="switchView('eventos',this)">📜 Eventos</button>
+
+<div class="nav-wrapper">
+
+    <nav class="nav-tabs">
+
+        <button class="nav-tab active" onclick="switchView('dashboard',this)">
+            📊 Dashboard
+        </button>
+
+        <button class="nav-tab" onclick="switchView('pons',this)">
+            🔌 PONs
+        </button>
+
+        <button class="nav-tab" onclick="switchView('onts',this)">
+            📋 ONTs
+        </button>
+
+        <button class="nav-tab" onclick="switchView('offline',this)">
+            ❌ Offline
+            <span class="badge-count" id="badge-offline">0</span>
+        </button>
+
+        <button class="nav-tab" onclick="switchView('disconnected',this)">
+            ⚡ Desenganchadas
+            <span class="badge-count" id="badge-disconnected">0</span>
+        </button>
+
+        <button class="nav-tab" onclick="switchView('unauth',this)">
+            🔐 Autorización
+            <span class="badge-count" id="badge-unauth">0</span>
+        </button>
+
+        <button class="nav-tab" onclick="switchView('authed',this)">
+            ✅ Autorizadas
+        </button>
+
+        <button class="nav-tab" onclick="switchView('eventos',this)">
+            📜 Eventos
+        </button>
+
+    </nav>
+
 </div>
 
 <main class="container">
