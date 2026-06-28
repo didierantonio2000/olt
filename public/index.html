@@ -57,6 +57,7 @@
     .btn-xs { padding:3px 8px; font-size:10px; }
     .btn-close { background:transparent; border:none; color:var(--text-muted); font-size:22px; cursor:pointer; padding:0; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
     .btn-close:hover { background:var(--bg); color:var(--text); }
+    .btn:disabled { opacity:0.6; cursor:not-allowed; transform:none !important; }
 
     /* ── Nav Tabs ── */
     .nav-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); background:var(--card); padding:0 24px; box-shadow:var(--shadow); overflow-x:auto; }
@@ -181,6 +182,7 @@
     /* ── Loading ── */
     .loading { text-align:center; padding:60px 20px; color:var(--text-muted); }
     .spinner { display:inline-block; width:36px; height:36px; border:4px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin 0.8s linear infinite; }
+    .spinner-sm { width:14px; height:14px; border-width:2px; }
     @keyframes spin { to{transform:rotate(360deg)} }
     .loading-text { margin-top:12px; font-size:14px; font-weight:600; }
 
@@ -219,12 +221,9 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  HEADER                                                                 -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
 <header>
   <div class="header-left">
-    <div class="logo">🌐 SmartOLT NMS Pro</div>
+    <div class="logo">🌐 SmartOLT 1A-NETWORKS</div>
     <select class="olt-selector" id="olt-select" onchange="switchOLT()"></select>
     <button class="btn btn-secondary btn-sm" onclick="showAddOLTModal()">➕ OLT</button>
     <button class="btn btn-secondary btn-sm" onclick="showEditOLTModal()">✏️ Editar</button>
@@ -234,15 +233,13 @@
     </div>
   </div>
   <div class="header-right">
-    <!-- <button class="btn btn-secondary btn-sm" onclick="exportCSV()">📥 CSV</button> -->
+    <button class="btn btn-secondary btn-sm" onclick="exportCSV()">📥 CSV</button>
+    <button class="btn btn-success btn-sm" id="btn-save-local" onclick="saveLocalData()" title="Guarda el caché de ONTs y el historial de potencia en disco (ont_cache.json / power_history.json). Es opcional: mientras no lo presiones, todo funciona solo con los datos en memoria.">💾 Guardar Local</button>
     <button class="btn btn-primary btn-sm" onclick="syncData()">🔄 Sincronizar</button>
     <button class="btn btn-secondary btn-sm" onclick="toggleTheme()">🌙</button>
   </div>
 </header>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  NAV TABS                                                               -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div class="nav-tabs">
   <button class="nav-tab active" onclick="switchView('dashboard',this)">📊 Dashboard</button>
   <button class="nav-tab" onclick="switchView('pons',this)">🔌 PONs</button>
@@ -250,17 +247,14 @@
   <button class="nav-tab" onclick="switchView('offline',this)">❌ Offline <span class="badge-count" id="badge-offline">0</span></button>
   <button class="nav-tab" onclick="switchView('disconnected',this)">⚡ Desenganchadas <span class="badge-count" id="badge-disconnected">0</span></button>
   <button class="nav-tab" onclick="switchView('unauth',this)">🔐 Autorización <span class="badge-count" id="badge-unauth">0</span></button>
+  <button class="nav-tab" onclick="switchView('authed',this)">✅ Autorizadas</button>
   <button class="nav-tab" onclick="switchView('eventos',this)">📜 Eventos</button>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  MAIN CONTENT                                                           -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
 <main class="container">
 
-  <!-- ── DASHBOARD ────────────────────────────────────────────────────── -->
+  <!-- DASHBOARD -->
   <div id="dashboard" class="view active">
-    <!-- KPIs -->
     <div class="kpi-grid" id="kpi-grid">
       <div class="kpi-card" style="--kpi-color:var(--primary)" onclick="switchView('onts',null,'all')">
         <div class="kpi-label">📊 Total ONTs</div>
@@ -294,7 +288,6 @@
       </div>
     </div>
 
-    <!-- Gráficas -->
     <div class="charts-grid">
       <div class="chart-card">
         <div class="chart-title">Estado de ONTs <span style="font-size:11px;color:var(--text-muted)" id="chart-status-sub"></span></div>
@@ -323,7 +316,7 @@
     </div>
   </div>
 
-  <!-- ── PONs ──────────────────────────────────────────────────────────── -->
+  <!-- PONs -->
   <div id="pons" class="view">
     <div class="section-header">
       <div>
@@ -337,7 +330,7 @@
     </div>
   </div>
 
-  <!-- ── ONTs ──────────────────────────────────────────────────────────── -->
+  <!-- ONTs -->
   <div id="onts" class="view">
     <div class="table-card">
       <div class="table-header">
@@ -355,6 +348,7 @@
           <select class="filter-select" id="filter-pon" onchange="renderTable()">
             <option value="">Todos los PON</option>
           </select>
+          <button class="btn btn-warning btn-sm" id="btn-refresh-optical" onclick="refreshAllOpticalPower()" title="Recorre todas las ONTs Online una por una y trae su RxPower/TxPower/Temperatura/Voltaje reales (igual que el botón 'Refrescar potencia' individual, pero para todas).">🔬 Actualizar Potencia (todas)</button>
         </div>
       </div>
       <div style="overflow-x:auto">
@@ -384,7 +378,7 @@
     </div>
   </div>
 
-  <!-- ── OFFLINE ──────────────────────────────────────────────────────── -->
+  <!-- OFFLINE -->
   <div id="offline" class="view">
     <div class="section-header">
       <div>
@@ -414,7 +408,7 @@
     </div>
   </div>
 
-  <!-- ── DESENGANCHADAS ─────────────────────────────────────────────────── -->
+  <!-- DESENGANCHADAS -->
   <div id="disconnected" class="view">
     <div class="section-header">
       <div>
@@ -428,7 +422,7 @@
     </div>
   </div>
 
-  <!-- ── AUTORIZACIÓN ───────────────────────────────────────────────────── -->
+  <!-- AUTORIZACIÓN -->
   <div id="unauth" class="view">
     <div class="section-header">
       <div>
@@ -442,7 +436,21 @@
     </div>
   </div>
 
-  <!-- ── EVENTOS ────────────────────────────────────────────────────────── -->
+  <!-- AUTORIZADAS POR PON -->
+  <div id="authed" class="view">
+    <div class="section-header">
+      <div>
+        <div class="section-title">✅ ONTs Autorizadas por PON</div>
+        <div class="section-sub">Lista de MACs autorizadas en cada puerto PON de la OLT</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="loadAuthedOnts()">🔄 Consultar</button>
+    </div>
+    <div id="authed-container">
+      <div class="loading"><div class="spinner"></div><div class="loading-text">Presiona Consultar para cargar...</div></div>
+    </div>
+  </div>
+
+  <!-- EVENTOS -->
   <div id="eventos" class="view">
     <div class="table-card">
       <div class="table-header">
@@ -455,9 +463,7 @@
 
 </main>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  MODAL: ONT Detalles + Historial                                        -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: ONT Detalles -->
 <div id="ont-modal-overlay" class="modal-overlay">
   <div class="modal modal-lg">
     <div class="modal-header">
@@ -465,7 +471,6 @@
       <button class="btn-close" onclick="closeModal('ont-modal-overlay')">✕</button>
     </div>
 
-    <!-- Info básica -->
     <div class="form-row">
       <div class="form-group">
         <label>PON / ONT ID</label>
@@ -493,7 +498,6 @@
       </div>
     </div>
 
-    <!-- Métricas ópticas -->
     <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">Métricas Ópticas</div>
     <div class="optical-grid">
       <div class="optical-metric">
@@ -523,14 +527,12 @@
       </div>
     </div>
 
-    <!-- Historial de potencia -->
     <div class="history-section">
       <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">Historial de Monitoreo de Potencia</div>
       <div class="history-chart-wrap"><canvas id="history-chart"></canvas></div>
       <div id="history-empty" style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;display:none">No hay historial disponible aún. Se registra con cada escaneo.</div>
     </div>
 
-    <!-- Tiempos -->
     <div class="form-row" style="margin-top:16px">
       <div class="form-group">
         <label>Primer Online</label>
@@ -547,9 +549,10 @@
     </div>
 
     <div class="form-actions">
-      <button class="btn btn-primary btn-sm" onclick="saveOntName()">💾 Guardar Nombre</button>
+      <button class="btn btn-primary btn-sm" id="btn-save-name" onclick="saveOntName()">💾 Guardar Nombre</button>
       <button class="btn btn-warning btn-sm" onclick="refreshOntOptical()">🔄 Actualizar Potencia</button>
       <button class="btn btn-info btn-sm" onclick="restartOnt()">🔄 Reiniciar ONT</button>
+      <button class="btn btn-success btn-sm" onclick="activateOnt()">▶️ Activar</button>
       <button class="btn btn-danger btn-sm" onclick="deactivateOnt()">⏹️ Desactivar</button>
       <button class="btn btn-warning btn-sm" onclick="cleanUopFlag()">🧹 Limpiar Flag</button>
       <button class="btn btn-secondary btn-sm" onclick="closeModal('ont-modal-overlay')">Cerrar</button>
@@ -557,9 +560,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  MODAL: Agregar / Editar OLT                                            -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Agregar / Editar OLT -->
 <div id="olt-modal-overlay" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -598,9 +599,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  MODAL: Autorizar ONT                                                   -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Autorizar ONT -->
 <div id="auth-modal-overlay" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -624,9 +623,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  MODAL: PON Detalle con gráficas                                        -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: PON Detalle -->
 <div id="pon-modal-overlay" class="modal-overlay">
   <div class="modal modal-lg">
     <div class="modal-header">
@@ -657,11 +654,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  JAVASCRIPT                                                             -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
 <script>
-// ── Estado global ──────────────────────────────────────────────────────────
 let olts = [];
 let currentOltId = null;
 let currentData = null;
@@ -672,7 +665,6 @@ let currentOntForModal = null;
 let historyChart = null;
 let ponChartPower = null, ponChartStatus = null;
 
-// ── WebSocket ──────────────────────────────────────────────────────────────
 function connectWS() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     wsConn = new WebSocket(`${proto}://${location.host}/ws`);
@@ -685,10 +677,7 @@ function connectWS() {
         setTimeout(connectWS, 3000);
     };
     wsConn.onmessage = (e) => {
-        try {
-            const msg = JSON.parse(e.data);
-            handleWSMessage(msg);
-        } catch {}
+        try { const msg = JSON.parse(e.data); handleWSMessage(msg); } catch {}
     };
 }
 
@@ -702,9 +691,7 @@ function handleWSMessage(msg) {
         document.getElementById('scan-dot').classList.remove('scanning');
         document.getElementById('scan-label').textContent = 'Actualizado';
         addEvent('success', `Escaneo completado: ${data.data?.totalOnts || 0} ONTs`);
-        if (data.oltId === currentOltId) {
-            processData(data.data);
-        }
+        if (data.oltId === currentOltId) processData(data.data);
     } else if (type === 'scan_error') {
         document.getElementById('scan-dot').classList.remove('scanning');
         document.getElementById('scan-label').textContent = 'Error';
@@ -715,11 +702,37 @@ function handleWSMessage(msg) {
         addEvent('warning', `ONT ${data.pon}/${data.ont} desactivada`);
     } else if (type === 'ont_authorized') {
         addEvent('success', `ONT ${data.mac} autorizada en PON ${data.pon}`);
-        // No recargar la lista — el modal ya quitó la tarjeta individualmente
+    } else if (type === 'optical_refresh_started') {
+        if (data.oltId === currentOltId) {
+            document.getElementById('scan-dot').classList.add('scanning');
+            document.getElementById('scan-label').textContent = `Actualizando potencia 0/${data.total}...`;
+            showNotification(`Actualizando potencia de ${data.total} ONTs Online...`, 'info');
+        }
+        addEvent('info', `Refresco de potencia iniciado OLT ${data.oltId}: ${data.total} ONTs`);
+    } else if (type === 'optical_refresh_progress') {
+        if (data.oltId === currentOltId) {
+            document.getElementById('scan-label').textContent = `Actualizando potencia ${data.done}/${data.total}...`;
+        }
+    } else if (type === 'optical_refresh_completed') {
+        const btn = document.getElementById('btn-refresh-optical');
+        if (btn) btn.disabled = false;
+        if (data.oltId === currentOltId) {
+            document.getElementById('scan-dot').classList.remove('scanning');
+            document.getElementById('scan-label').textContent = `Potencia actualizada ${new Date().toLocaleTimeString()}`;
+            showNotification(`Potencia actualizada: ${data.updated}/${data.total} ONTs`, 'success');
+            if (data.data) processData(data.data);
+        }
+        addEvent('success', `Potencia óptica actualizada OLT ${data.oltId}: ${data.updated}/${data.total}`);
+    } else if (type === 'optical_refresh_error') {
+        const btn = document.getElementById('btn-refresh-optical');
+        if (btn) btn.disabled = false;
+        document.getElementById('scan-dot').classList.remove('scanning');
+        document.getElementById('scan-label').textContent = 'Error';
+        showNotification('Error actualizando potencia: ' + data.error, 'error');
+        addEvent('error', `Error refrescando potencia OLT ${data.oltId}: ${data.error}`);
     }
 }
 
-// ── Carga inicial ──────────────────────────────────────────────────────────
 async function init() {
     loadTheme();
     connectWS();
@@ -756,20 +769,18 @@ function switchOLT() {
 
 async function loadData() {
     if (!currentOltId) return;
+    showNotification('Cargando datos...', 'info');
     document.getElementById('scan-dot').classList.add('scanning');
     document.getElementById('scan-label').textContent = 'Cargando...';
     try {
         const r = await fetch(`/api/onts/${currentOltId}`);
         const d = await r.json();
         if (d.scanning) {
-            // El servidor está escaneando en background; datos llegarán por WebSocket
             document.getElementById('scan-label').textContent = 'Escaneando OLT...';
-            // Si ya hay datos (caché viejo), mostramos mientras esperamos
             if (d.pons && d.pons.length > 0) {
                 processData(d);
                 showNotification('Actualizando datos en segundo plano...', 'info');
             } else {
-                // Sin datos aún: mostrar spinner en el contenido
                 showLoadingState();
             }
         } else {
@@ -799,7 +810,6 @@ function showLoadingState() {
     const body = document.getElementById('ont-table-body');
     if (body) body.innerHTML = `<tr><td colspan="10" class="table-empty">${spinner}</td></tr>`;
 
-    // Contador regresivo
     let secs = 20;
     const interval = setInterval(() => {
         secs--;
@@ -816,7 +826,6 @@ function processData(data) {
     data.pons.forEach(pon => {
         (pon.onts || []).forEach(ont => currentOntsData.push(ont));
     });
-
     updateKPIs(data);
     updateCharts(data);
     renderPons(data);
@@ -824,12 +833,10 @@ function processData(data) {
     renderOffline();
     renderDisconnected(data);
     updatePonFilter();
-
     document.getElementById('scan-dot').classList.remove('scanning');
     document.getElementById('scan-label').textContent = `Actualizado ${new Date().toLocaleTimeString()}`;
 }
 
-// ── KPIs ───────────────────────────────────────────────────────────────────
 function updateKPIs(data) {
     const pct = n => data.totalOnts > 0 ? ((n / data.totalOnts) * 100).toFixed(1) + '%' : '0%';
     setKPI('val-total', data.totalOnts, `${data.pons.filter(p => p.count > 0).length} PONs activos`);
@@ -849,7 +856,6 @@ function setKPI(id, val, sub) {
     if (subEl) subEl.textContent = sub || '';
 }
 
-// ── Gráficas ───────────────────────────────────────────────────────────────
 function destroyChart(key) {
     if (charts[key]) { charts[key].destroy(); delete charts[key]; }
 }
@@ -857,7 +863,6 @@ function destroyChart(key) {
 function updateCharts(data) {
     const pons = data.pons.filter(p => p.count > 0);
 
-    // 1. Estado de ONTs (Donut)
     destroyChart('status');
     const online = data.totalWorking;
     const offline = data.totalOnts - data.totalWorking;
@@ -875,7 +880,6 @@ function updateCharts(data) {
     });
     document.getElementById('chart-status-sub').textContent = `${online}/${data.totalOnts}`;
 
-    // 2. ONTs por PON (Barras apiladas)
     destroyChart('pons');
     charts['pons'] = new Chart(document.getElementById('chart-pons'), {
         type: 'bar',
@@ -891,7 +895,6 @@ function updateCharts(data) {
             plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
     });
 
-    // 3. Distribución de potencia RX (Histograma)
     destroyChart('power-dist');
     const powers = currentOntsData.filter(o => o.rxPower !== null).map(o => o.rxPower);
     const bins = [
@@ -915,7 +918,6 @@ function updateCharts(data) {
             plugins: { legend: { display: false } } }
     });
 
-    // 4. Potencia promedio por PON
     destroyChart('power-pon');
     const ponPowers = pons.filter(p => p.avgPower !== null);
     charts['power-pon'] = new Chart(document.getElementById('chart-power-pon'), {
@@ -934,7 +936,6 @@ function updateCharts(data) {
             plugins: { legend: { display: false } } }
     });
 
-    // 5. Temperatura por PON
     destroyChart('temp');
     const ponTemps = pons.filter(p => p.avgTemp !== null);
     charts['temp'] = new Chart(document.getElementById('chart-temp'), {
@@ -953,7 +954,6 @@ function updateCharts(data) {
             plugins: { legend: { display: false } } }
     });
 
-    // 6. Salud de red por PON (Radar)
     destroyChart('health');
     charts['health'] = new Chart(document.getElementById('chart-health'), {
         type: 'radar',
@@ -972,7 +972,6 @@ function updateCharts(data) {
     });
 }
 
-// ── PONs ───────────────────────────────────────────────────────────────────
 function renderPons(data) {
     const container = document.getElementById('pons-container');
     const activePons = data.pons.filter(p => p.count > 0);
@@ -1030,7 +1029,6 @@ function renderPons(data) {
     }).join('');
 }
 
-// ── Tabla ONTs ─────────────────────────────────────────────────────────────
 function updatePonFilter() {
     const sel = document.getElementById('filter-pon');
     const pons = [...new Set(currentOntsData.map(o => o.pon))].sort((a,b)=>a-b);
@@ -1097,7 +1095,6 @@ function renderTable() {
     }).join('');
 }
 
-// ── Helper: tiempo transcurrido desde una fecha ────────────────────────────
 function tiempoTranscurrido(fechaStr) {
     if (!fechaStr || fechaStr === '0000-00-00 00:00:00') return null;
     const fecha = new Date(fechaStr.replace(' ', 'T'));
@@ -1111,7 +1108,6 @@ function tiempoTranscurrido(fechaStr) {
     return { texto: `${mins}m`, dias: 0 };
 }
 
-// ── Vista Offline: tabla simple de todas las ONTs sin señal ────────────────
 function renderOffline() {
     const offline = currentOntsData.filter(o => o.status === 'offline');
     document.getElementById('badge-offline').textContent = offline.length;
@@ -1128,7 +1124,7 @@ function renderOffline() {
         const mac = ont.macAddress || ont.serial || 'N/A';
         const tc = tiempoTranscurrido(ont.lastOnlineTime);
         const tiempoCaido = tc ? tc.texto : '—';
-        const colorTiempo = !tc ? 'var(--text-muted)' : tc.dias >= 2 ? 'var(--text-muted)' : 'var(--danger)';
+        const colorTiempo = !tc ? 'var(--text-muted)' : tc.dias < 2 ? 'var(--danger)' : 'var(--text-muted)';
         const badgeTiempo = !tc ? '' : tc.dias < 2
             ? `<span class="badge badge-offline" style="margin-left:6px">Reciente</span>`
             : `<span class="badge" style="background:rgba(107,114,128,0.15);color:#6b7280;margin-left:6px">Antigua</span>`;
@@ -1146,25 +1142,13 @@ function renderOffline() {
     }).join('');
 }
 
-// ── Desenganchadas: separadas en recientes (<48h) y antiguas ───────────────
 function renderDisconnected(data) {
     const container = document.getElementById('disconnected-container');
-
-    // Solo ONTs offline con fecha de último online conocida
     const todas = currentOntsData.filter(o =>
         o.status === 'offline' && o.lastOnlineTime && o.lastOnlineTime !== '0000-00-00 00:00:00'
     );
-
-    // Separar: recientes = caídas hace menos de 48h → requieren atención
-    const recientes = todas.filter(o => {
-        const tc = tiempoTranscurrido(o.lastOnlineTime);
-        return tc && tc.dias < 2;
-    });
-    const antiguas = todas.filter(o => {
-        const tc = tiempoTranscurrido(o.lastOnlineTime);
-        return !tc || tc.dias >= 2;
-    });
-
+    const recientes = todas.filter(o => { const tc = tiempoTranscurrido(o.lastOnlineTime); return tc && tc.dias < 2; });
+    const antiguas  = todas.filter(o => { const tc = tiempoTranscurrido(o.lastOnlineTime); return !tc || tc.dias >= 2; });
     document.getElementById('badge-disconnected').textContent = recientes.length;
 
     if (todas.length === 0) {
@@ -1198,7 +1182,6 @@ function renderDisconnected(data) {
     };
 
     let html = '';
-
     if (recientes.length > 0) {
         html += `
         <div class="alert-banner">🔴 ${recientes.length} ONT${recientes.length > 1 ? 's' : ''} desenganchada${recientes.length > 1 ? 's' : ''} recientemente (últimas 48h)</div>
@@ -1206,7 +1189,6 @@ function renderDisconnected(data) {
             ${recientes.map(o => cardOnt(o, true)).join('')}
         </div>`;
     }
-
     if (antiguas.length > 0) {
         html += `
         <div style="margin:16px 0 10px;font-size:13px;font-weight:700;color:var(--text-muted);display:flex;align-items:center;gap:8px">
@@ -1217,11 +1199,9 @@ function renderDisconnected(data) {
             ${antiguas.map(o => cardOnt(o, false)).join('')}
         </div>`;
     }
-
     container.innerHTML = html;
 }
 
-// ── Autorización ───────────────────────────────────────────────────────────
 async function loadUnauthOnts() {
     if (!currentOltId) { showNotification('Seleccione una OLT primero', 'warning'); return; }
     const container = document.getElementById('unauth-container');
@@ -1229,9 +1209,7 @@ async function loadUnauthOnts() {
     try {
         const r = await fetch(`/api/unauth/${currentOltId}`);
         const d = await r.json();
-        if (d.error) {
-            showNotification('Error al escanear: ' + d.error, 'warning');
-        }
+        if (d.error) showNotification('Error al escanear: ' + d.error, 'warning');
         renderUnauthOnts(d.unauth || [], d.rawOutput || '');
     } catch (e) {
         container.innerHTML = `<div class="loading"><div class="loading-text">Error al buscar ONTs no autorizadas: ${e.message}</div></div>`;
@@ -1290,11 +1268,9 @@ async function authorizeOnt() {
     const mac = document.getElementById('auth-mac').value.trim();
     const pon = document.getElementById('auth-pon').value.trim();
     if (!mac || !pon) { showNotification('MAC y PON son obligatorios', 'error'); return; }
-
     const outputBox = document.getElementById('auth-output-box');
     outputBox.style.display = 'block';
     outputBox.textContent = 'Enviando whitelist add al OLT...';
-
     try {
         const r = await fetch(`/api/unauth/${currentOltId}/authorize`, {
             method: 'POST',
@@ -1305,10 +1281,8 @@ async function authorizeOnt() {
         outputBox.textContent = d.output || d.message || '';
         if (d.success) {
             showNotification(d.message, 'success');
-            // Quitar la tarjeta de la lista sin refrescar toda la página
             const card = document.querySelector(`.unauth-card[data-mac="${mac.toUpperCase()}"]`);
             if (card) card.remove();
-            // Actualizar badge
             const badge = document.getElementById('badge-unauth');
             if (badge) badge.textContent = Math.max(0, parseInt(badge.textContent || '0') - 1);
             setTimeout(() => closeModal('auth-modal-overlay'), 2000);
@@ -1321,12 +1295,10 @@ async function authorizeOnt() {
     }
 }
 
-// ── Modal ONT ──────────────────────────────────────────────────────────────
 async function showOntModal(pon, ont) {
     const ontData = currentOntsData.find(o => o.pon === pon && o.ont === ont);
     if (!ontData) return;
     currentOntForModal = ontData;
-
     const mac = ontData.macAddress || ontData.serial || 'N/A';
     const name = ontData.name || '';
     document.getElementById('ont-modal-title').textContent = `ONT ${pon}/${ont} — ${mac}`;
@@ -1338,13 +1310,11 @@ async function showOntModal(pon, ont) {
     document.getElementById('edit-ont-first-online').value = ontData.firstOnlineTime || '—';
     document.getElementById('edit-ont-last-online').value = ontData.lastOnlineTime || '—';
     document.getElementById('edit-ont-last-offline').value = ontData.lastOfflineTime || '—';
-
     setOpticalMetric('m-rxpower', ontData.rxPower, 'dBm', v => v < -28 ? '#ef4444' : v < -25 ? '#f59e0b' : '#10b981');
     setOpticalMetric('m-txpower', ontData.txPower, 'dBm', () => 'var(--info)');
     setOpticalMetric('m-txbias', ontData.txBias, 'mA', () => 'var(--secondary)');
     setOpticalMetric('m-temp', ontData.temperature, '°C', v => v > 70 ? '#ef4444' : v > 55 ? '#f59e0b' : '#10b981');
     setOpticalMetric('m-voltage', ontData.voltage, 'V', () => 'var(--success)');
-
     openModal('ont-modal-overlay');
     await loadOntHistory(pon, ont);
 }
@@ -1368,15 +1338,10 @@ async function loadOntHistory(pon, ont) {
         const hist = d.history || [];
         const empty = document.getElementById('history-empty');
         const wrap = document.querySelector('.history-chart-wrap');
-
         if (hist.length === 0) {
-            empty.style.display = 'block';
-            wrap.style.display = 'none';
-            return;
+            empty.style.display = 'block'; wrap.style.display = 'none'; return;
         }
-        empty.style.display = 'none';
-        wrap.style.display = 'block';
-
+        empty.style.display = 'none'; wrap.style.display = 'block';
         if (historyChart) historyChart.destroy();
         historyChart = new Chart(document.getElementById('history-chart'), {
             type: 'line',
@@ -1403,11 +1368,12 @@ async function loadOntHistory(pon, ont) {
 async function refreshOntOptical() {
     if (!currentOntForModal || !currentOltId) return;
     const { pon, ont } = currentOntForModal;
-    showNotification('Actualizando métricas ópticas...', 'info');
+    showNotification('Consultando OLT...', 'info');
     try {
         const r = await fetch(`/api/optical/${currentOltId}/${pon}/${ont}`);
         const d = await r.json();
         if (d.success) {
+            // Actualizar métricas ópticas
             currentOntForModal.rxPower = d.rxPower;
             currentOntForModal.txPower = d.txPower;
             currentOntForModal.txBias = d.txBias;
@@ -1418,54 +1384,104 @@ async function refreshOntOptical() {
             setOpticalMetric('m-txbias', d.txBias, 'mA', () => 'var(--secondary)');
             setOpticalMetric('m-temp', d.temperature, '°C', v => v > 70 ? '#ef4444' : v > 55 ? '#f59e0b' : '#10b981');
             setOpticalMetric('m-voltage', d.voltage, 'V', () => 'var(--success)');
-            showNotification('Métricas actualizadas', 'success');
+            // Actualizar campos de estado desde la OLT directamente
+            if (d.onlineStatus) {
+                const isOnline = /up/i.test(d.onlineStatus);
+                document.getElementById('edit-ont-status').value =
+                    isOnline ? 'Online ✅' : `Offline ❌ (OLT: ${d.onlineStatus})`;
+            }
+            if (d.name && d.name !== 'NA') {
+                document.getElementById('edit-ont-name').value = d.name;
+                currentOntForModal.name = d.name;
+            }
+            if (d.firstUpTime) document.getElementById('edit-ont-first-online').value = d.firstUpTime;
+            if (d.lastUpTime)  document.getElementById('edit-ont-last-online').value  = d.lastUpTime;
+            if (d.lastOffTime) document.getElementById('edit-ont-last-offline').value  = d.lastOffTime;
+            showNotification('Datos actualizados desde OLT', 'success');
+        } else {
+            showNotification('Error: ' + d.message, 'error');
         }
     } catch (e) {
-        showNotification('Error al actualizar métricas', 'error');
+        showNotification('Error al consultar OLT', 'error');
     }
 }
 
-// ── Modal PON ──────────────────────────────────────────────────────────────
+// ── Cargar ONTs autorizadas por PON ───────────────────────────────────────
+async function loadAuthedOnts() {
+    if (!currentOltId) { showNotification('Seleccione una OLT primero', 'warning'); return; }
+    const container = document.getElementById('authed-container');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">Consultando OLT... esto puede tomar unos segundos</div></div>';
+    try {
+        const r = await fetch(`/api/authed/${currentOltId}`);
+        const d = await r.json();
+        if (!d.success) { container.innerHTML = `<div class="loading"><div class="loading-text">Error: ${d.message}</div></div>`; return; }
+        renderAuthedOnts(d.pons);
+    } catch(e) {
+        container.innerHTML = `<div class="loading"><div class="loading-text">Error: ${e.message}</div></div>`;
+    }
+}
+
+function renderAuthedOnts(pons) {
+    const container = document.getElementById('authed-container');
+    const ponNums = Object.keys(pons).sort((a,b) => parseInt(a)-parseInt(b));
+    if (ponNums.length === 0) {
+        container.innerHTML = '<div class="loading"><div class="loading-text">No se encontraron PONs</div></div>';
+        return;
+    }
+    let html = '';
+    for (const ponNum of ponNums) {
+        const { list, total, cached, error } = pons[ponNum];
+        html += `
+        <div class="table-card" style="margin-bottom:16px">
+          <div class="table-header">
+            <div class="table-title">🔌 PON ${ponNum} — ${total} ONTs autorizadas${cached ? ' <span style="font-size:10px;color:var(--warning)">(caché)</span>' : ''}${error ? ' <span style="font-size:10px;color:var(--danger)">Error</span>' : ''}</div>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>#</th><th>MAC Address</th><th>ONU ID</th><th>Estado</th></tr></thead>
+              <tbody>
+                ${list.length === 0
+                    ? '<tr><td colspan="4" class="table-empty">Sin ONTs autorizadas en este PON</td></tr>'
+                    : list.map((o, i) => `<tr>
+                        <td style="color:var(--text-muted)">${i+1}</td>
+                        <td style="font-family:monospace;font-weight:700">${o.mac}</td>
+                        <td style="color:var(--info)">${o.onuId || '—'}</td>
+                        <td>${o.status ? `<span class="badge badge-${/up/i.test(o.status)?'online':'offline'}">${o.status}</span>` : '—'}</td>
+                      </tr>`).join('')
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+    container.innerHTML = html;
+}
+
 function showPonModal(ponId) {
     if (!currentData) return;
     const pon = currentData.pons.find(p => p.pon === ponId);
     if (!pon) return;
-
     document.getElementById('pon-modal-title').textContent = `PON ${ponId} — ${pon.count} ONTs`;
-
-    // Gráfica potencia por ONT
     if (ponChartPower) ponChartPower.destroy();
     const ontsWithPower = (pon.onts || []).filter(o => o.rxPower !== null);
     ponChartPower = new Chart(document.getElementById('pon-chart-power'), {
         type: 'bar',
         data: {
             labels: ontsWithPower.map(o => `ONT ${o.ont}`),
-            datasets: [{
-                label: 'RX Power (dBm)',
-                data: ontsWithPower.map(o => o.rxPower),
-                backgroundColor: ontsWithPower.map(o => o.rxPower < -28 ? '#ef4444' : o.rxPower < -25 ? '#f59e0b' : '#10b981'),
-                borderRadius: 3
-            }]
+            datasets: [{ label: 'RX Power (dBm)', data: ontsWithPower.map(o => o.rxPower),
+                backgroundColor: ontsWithPower.map(o => o.rxPower < -28 ? '#ef4444' : o.rxPower < -25 ? '#f59e0b' : '#10b981'), borderRadius: 3 }]
         },
-        options: { responsive: true, maintainAspectRatio: false,
-            scales: { y: { beginAtZero: false } },
-            plugins: { legend: { display: false } } }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } }, plugins: { legend: { display: false } } }
     });
-
-    // Gráfica estado
     if (ponChartStatus) ponChartStatus.destroy();
     ponChartStatus = new Chart(document.getElementById('pon-chart-status'), {
         type: 'doughnut',
         data: {
             labels: ['Online', 'Offline'],
-            datasets: [{ data: [pon.online, pon.count - pon.online],
-                backgroundColor: ['#10b981','#ef4444'], borderWidth: 2 }]
+            datasets: [{ data: [pon.online, pon.count - pon.online], backgroundColor: ['#10b981','#ef4444'], borderWidth: 2 }]
         },
-        options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
     });
-
-    // Tabla de ONTs del PON
     document.getElementById('pon-modal-table').innerHTML = (pon.onts || []).map(ont => {
         const mac = ont.macAddress || ont.serial || 'N/A';
         const rxStr = ont.rxPower !== null ? ont.rxPower.toFixed(2) + ' dBm' : '—';
@@ -1480,11 +1496,9 @@ function showPonModal(ponId) {
           <td><button class="btn btn-primary btn-xs" onclick="showOntModal(${ont.pon},${ont.ont})">⚙️</button></td>
         </tr>`;
     }).join('');
-
     openModal('pon-modal-overlay');
 }
 
-// ── OLT CRUD ───────────────────────────────────────────────────────────────
 function showAddOLTModal() {
     document.getElementById('olt-modal-title').textContent = 'Agregar Nueva OLT';
     document.getElementById('olt-id').value = '';
@@ -1515,16 +1529,13 @@ async function saveOLT() {
     const host = document.getElementById('olt-host').value.trim();
     const user = document.getElementById('olt-user').value.trim();
     const password = document.getElementById('olt-password').value.trim();
-    if (!name || !host || !user || !password) {
-        showNotification('Todos los campos son obligatorios', 'error'); return;
-    }
+    if (!name || !host || !user || !password) { showNotification('Todos los campos son obligatorios', 'error'); return; }
     try {
         const isEdit = id && id !== '';
         const url = isEdit ? `/api/olts/${id}` : '/api/olts';
         const method = isEdit ? 'PUT' : 'POST';
         const r = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
+            method, headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, host, user, password })
         });
         const d = await r.json();
@@ -1540,7 +1551,6 @@ async function saveOLT() {
     }
 }
 
-// ── Acciones ONT ───────────────────────────────────────────────────────────
 async function restartOnt() {
     if (!currentOntForModal || !currentOltId) return;
     const { pon, ont } = currentOntForModal;
@@ -1563,6 +1573,18 @@ async function restartOntDirect(pon, ont) {
     } catch { showNotification('Error al reiniciar', 'error'); }
 }
 
+async function activateOnt() {
+    if (!currentOntForModal || !currentOltId) return;
+    const { pon, ont } = currentOntForModal;
+    if (!confirm(`¿Activar ONT ${pon}/${ont}?`)) return;
+    try {
+        const r = await fetch(`/api/activate/${currentOltId}/${pon}/${ont}`, { method: 'POST' });
+        const d = await r.json();
+        showNotification(d.success ? 'ONT activada' : d.message, d.success ? 'success' : 'error');
+        if (d.success) closeModal('ont-modal-overlay');
+    } catch { showNotification('Error al activar', 'error'); }
+}
+
 async function deactivateOnt() {
     if (!currentOntForModal || !currentOltId) return;
     const { pon, ont } = currentOntForModal;
@@ -1575,7 +1597,6 @@ async function deactivateOnt() {
     } catch { showNotification('Error al desactivar', 'error'); }
 }
 
-// ── Utilidades ─────────────────────────────────────────────────────────────
 function switchView(viewId, tabEl, filter) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const target = document.getElementById(viewId);
@@ -1610,9 +1631,39 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function syncData() {
     if (!currentOltId) { showNotification('Seleccione una OLT', 'warning'); return; }
     fetch(`/api/onts/${currentOltId}/refresh`, { method: 'POST' })
-        .then(() => loadData())
-        .catch(() => loadData());
+        .then(() => loadData()).catch(() => loadData());
     showNotification('Sincronizando datos...', 'info');
+}
+
+function refreshAllOpticalPower() {
+    if (!currentOltId) { showNotification('Seleccione una OLT', 'warning'); return; }
+    const btn = document.getElementById('btn-refresh-optical');
+    if (btn) btn.disabled = true;
+    fetch(`/api/onts/${currentOltId}/refresh-optical`, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) {
+                showNotification(d.message || 'No se pudo iniciar', 'error');
+                if (btn) btn.disabled = false;
+            }
+            // Si arrancó bien, el progreso/finalización llega por WebSocket
+            // (optical_refresh_started / progress / completed), que reactiva el botón.
+        })
+        .catch(e => { showNotification('Error: ' + e.message, 'error'); if (btn) btn.disabled = false; });
+}
+
+function saveLocalData() {
+    const btn = document.getElementById('btn-save-local');
+    const originalText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '💾 Guardando...'; }
+    fetch('/api/save-local', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) showNotification('Datos guardados en local ✅', 'success');
+            else showNotification('Error al guardar: ' + (data.message || ''), 'error');
+        })
+        .catch(err => showNotification('Error al guardar: ' + err.message, 'error'))
+        .finally(() => { if (btn) { btn.disabled = false; btn.textContent = originalText; } });
 }
 
 function exportCSV() {
@@ -1643,7 +1694,6 @@ function loadTheme() {
     if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 }
 
-// ── Eventos ────────────────────────────────────────────────────────────────
 const events = [];
 function addEvent(type, msg) {
     const ts = new Date().toLocaleTimeString();
@@ -1666,7 +1716,6 @@ function clearEvents() {
     document.getElementById('event-log').innerHTML = '';
 }
 
-// ── Notificaciones ─────────────────────────────────────────────────────────
 function showNotification(msg, type = 'info') {
     const n = document.createElement('div');
     n.className = `notification notification-${type}`;
@@ -1676,14 +1725,12 @@ function showNotification(msg, type = 'info') {
     setTimeout(() => { n.style.opacity = '0'; n.style.transform = 'translateX(400px)'; n.style.transition = 'all 0.3s'; setTimeout(() => n.remove(), 300); }, 3500);
 }
 
-// ── Cerrar modales al hacer click fuera ───────────────────────────────────
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', e => {
         if (e.target === overlay) overlay.classList.remove('open');
     });
 });
 
-// Limpiar flag de operación
 async function cleanUopFlag() {
     if (!currentOntForModal || !currentOltId) return;
     const { pon, ont } = currentOntForModal;
@@ -1695,12 +1742,17 @@ async function cleanUopFlag() {
     } catch { showNotification('Error al limpiar flag', 'error'); }
 }
 
-// Guardar nombre de ONT
+// ── Guardar nombre con spinner en botón ────────────────────────────────────
 async function saveOntName() {
     if (!currentOntForModal || !currentOltId) return;
     const { pon, ont } = currentOntForModal;
     const name = document.getElementById('edit-ont-name').value.trim();
     if (!name) { showNotification('Ingrese un nombre', 'warning'); return; }
+
+    const btn = document.getElementById('btn-save-name');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner spinner-sm" style="border-top-color:#fff"></div> Guardando...';
+
     try {
         const r = await fetch('/api/ont/name', {
             method: 'POST',
@@ -1713,10 +1765,14 @@ async function saveOntName() {
             currentOntForModal.name = name;
             renderTable();
         }
-    } catch { showNotification('Error al guardar nombre', 'error'); }
+    } catch {
+        showNotification('Error al guardar nombre', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '💾 Guardar Nombre';
+    }
 }
 
-// ── Iniciar ────────────────────────────────────────────────────────────────
 init();
 </script>
 </body>
