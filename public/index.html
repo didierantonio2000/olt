@@ -7,389 +7,61 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
 
-    /*==========================
-        TOPBAR
-==========================*/
-
-.topbar{
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:20px;
-
-    padding:15px 20px;
-
-    background:#0f172a;
-
-    color:#fff;
-
-    flex-wrap:wrap;
-
-    border-bottom:1px solid rgba(255,255,255,.08);
-
-}
-
-.header-left,
-.header-right{
-
-    display:flex;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-
-}
-
-.logo{
-
-    display:flex;
-    align-items:center;
-    gap:12px;
-
-}
-
-.logo-icon{
-
-    font-size:34px;
-
-}
-
-.logo h2{
-
-    margin:0;
-    font-size:22px;
-    font-weight:bold;
-
-}
-
-.logo small{
-
-    color:#94a3b8;
-
-}
-
-.olt-selector{
-
-    min-width:230px;
-
-    padding:10px 15px;
-
-    border:none;
-
-    border-radius:10px;
-
-    background:#1e293b;
-
-    color:white;
-
-}
-
-/*==========================
-        BOTONES
-==========================*/
-
-.btn{
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-
-    padding:10px 16px;
-
-    border:none;
-
-    border-radius:10px;
-
-    cursor:pointer;
-
-    font-weight:600;
-
-    transition:.25s;
-
-}
-
-.btn:hover{
-
-    transform:translateY(-2px);
-
-}
-
-.btn-light{
-
-    background:#1e293b;
-    color:white;
-
-}
-
-.btn-primary{
-
-    background:#2563eb;
-    color:white;
-
-}
-
-.btn-success{
-
-    background:#16a34a;
-    color:white;
-
-}
-
-/*==========================
-      ESTADO
-==========================*/
-
-.scan-status{
-
-    display:flex;
-    align-items:center;
-    gap:8px;
-
-    background:#1e293b;
-
-    padding:8px 14px;
-
-    border-radius:30px;
-
-}
-
-.scan-dot{
-
-    width:10px;
-    height:10px;
-
-    border-radius:50%;
-
-    background:#22c55e;
-
-    animation:pulse 1.5s infinite;
-
-}
-
-@keyframes pulse{
-
-0%{
-box-shadow:0 0 0 0 rgba(34,197,94,.8);
-}
-
-70%{
-box-shadow:0 0 0 10px transparent;
-}
-
-100%{
-box-shadow:0 0 0 0 transparent;
-}
-
-}
-
-/*==========================
-      MENU
+  /*==========================
+      MENÚ
 ==========================*/
 
 .nav-wrapper{
-
     width:100%;
-
-    overflow-x:auto;
-
-    overflow-y:hidden;
-
     background:#111827;
-
-    scrollbar-width:thin;
-
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
 }
 
 .nav-wrapper::-webkit-scrollbar{
-
-    height:8px;
-
+    height:6px;
 }
 
 .nav-wrapper::-webkit-scrollbar-thumb{
-
     background:#2563eb;
-
     border-radius:20px;
-
 }
 
 .nav-tabs{
-
-    display:flex;
-
+    display:inline-flex;
     flex-wrap:nowrap;
-
     gap:10px;
-
-    padding:12px;
-
+    padding:12px 16px;
     min-width:max-content;
-
 }
 
 .nav-tab{
-
     flex:0 0 auto;
+    white-space:nowrap;
 
     display:flex;
-
     align-items:center;
-
     gap:8px;
 
     padding:12px 18px;
 
     border:none;
-
     border-radius:12px;
 
     background:#1f2937;
-
-    color:white;
+    color:#fff;
 
     cursor:pointer;
-
     transition:.25s;
-
-    white-space:nowrap;
-
-    font-weight:600;
-
 }
 
 .nav-tab:hover{
-
     background:#2563eb;
-
-    transform:translateY(-2px);
-
 }
 
 .nav-tab.active{
-
     background:#2563eb;
-
-    box-shadow:0 6px 18px rgba(37,99,235,.45);
-
-}
-
-.badge-count{
-
-    background:#ef4444;
-
-    color:white;
-
-    border-radius:20px;
-
-    padding:2px 8px;
-
-    font-size:12px;
-
-    font-weight:bold;
-
-}
-
-/*==========================
-      RESPONSIVE
-==========================*/
-
-@media(max-width:900px){
-
-.topbar{
-
-flex-direction:column;
-
-align-items:stretch;
-
-}
-
-.header-left,
-.header-right{
-
-justify-content:center;
-
-}
-
-.logo{
-
-justify-content:center;
-
-}
-
-.olt-selector{
-
-width:100%;
-
-}
-
-}
-
-@media(max-width:600px){
-
-.btn span{
-
-display:none;
-
-}
-
-.btn{
-
-width:45px;
-height:45px;
-padding:0;
-
-}
-
-.scan-status{
-
-width:100%;
-justify-content:center;
-
-}
-
-.nav-tab{
-
-font-size:14px;
-
-padding:10px 16px;
-
-}
-
-}
-
-@media(max-width:480px){
-
-.header-left,
-.header-right{
-
-flex-direction:column;
-
-align-items:stretch;
-
-}
-
-.btn{
-
-width:100%;
-height:auto;
-padding:12px;
-
-}
-
-.btn span{
-
-display:inline;
-
-}
-
-.olt-selector{
-
-width:100%;
-
-}
-
 }
     :root {
       --primary: #00a86b;
