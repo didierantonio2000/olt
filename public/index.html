@@ -610,87 +610,182 @@ display:none;
             </div>
         </div>
 
-        <select class="olt-selector" id="olt-select" onchange="switchOLT()"></select>
+        <select
+            class="olt-selector"
+            id="olt-select"
+            onchange="switchOLT()">
+        </select>
 
-        <button class="btn btn-light" onclick="showAddOLTModal()">
-            ➕ <span>OLT</span>
+        <button
+            class="btn btn-light"
+            onclick="showAddOLTModal()">
+
+            ➕
+            <span>OLT</span>
+
         </button>
 
-        <button class="btn btn-light" onclick="showEditOLTModal()">
-            ✏️ <span>Editar</span>
+        <button
+            class="btn btn-light"
+            onclick="showEditOLTModal()">
+
+            ✏️
+            <span>Editar</span>
+
         </button>
 
         <div class="scan-status">
-            <div class="scan-dot" id="scan-dot"></div>
-            <span id="scan-label">Listo</span>
+
+            <div
+                class="scan-dot"
+                id="scan-dot">
+            </div>
+
+            <span id="scan-label">
+                Listo
+            </span>
+
         </div>
 
     </div>
 
     <div class="header-right">
 
-        <button class="btn btn-light" onclick="exportCSV()">
-            📥 <span>CSV</span>
+        <button
+            class="btn btn-light"
+            onclick="exportCSV()">
+
+            📥
+            <span>CSV</span>
+
         </button>
 
-        <button class="btn btn-success"
-                id="btn-save-local"
-                onclick="saveLocalData()">
-            💾 <span>Guardar</span>
+        <button
+            class="btn btn-success"
+            id="btn-save-local"
+            onclick="saveLocalData()"
+            title="Guardar información local">
+
+            💾
+            <span>Guardar</span>
+
         </button>
 
-        <button class="btn btn-primary"
-                onclick="syncData()">
-            🔄 <span>Sincronizar</span>
+        <button
+            class="btn btn-primary"
+            onclick="syncData()">
+
+            🔄
+            <span>Sincronizar</span>
+
         </button>
 
-        <button class="btn btn-light"
-                onclick="toggleTheme()">
+        <button
+            class="btn btn-light"
+            onclick="toggleTheme()">
+
             🌙
+
         </button>
 
     </div>
 
 </header>
 
+<!-- ===================== -->
+<!--      MENÚ            -->
+<!-- ===================== -->
 
 <div class="nav-wrapper">
 
     <nav class="nav-tabs">
 
-        <button class="nav-tab active" onclick="switchView('dashboard',this)">
+        <button
+            class="nav-tab active"
+            onclick="switchView('dashboard',this)">
+
             📊 Dashboard
+
         </button>
 
-        <button class="nav-tab" onclick="switchView('pons',this)">
+        <button
+            class="nav-tab"
+            onclick="switchView('pons',this)">
+
             🔌 PONs
+
         </button>
 
-        <button class="nav-tab" onclick="switchView('onts',this)">
+        <button
+            class="nav-tab"
+            onclick="switchView('onts',this)">
+
             📋 ONTs
+
         </button>
 
-        <button class="nav-tab" onclick="switchView('offline',this)">
+        <button
+            class="nav-tab"
+            onclick="switchView('offline',this)">
+
             ❌ Offline
-            <span class="badge-count" id="badge-offline">0</span>
+
+            <span
+                class="badge-count"
+                id="badge-offline">
+
+                0
+
+            </span>
+
         </button>
 
-        <button class="nav-tab" onclick="switchView('disconnected',this)">
+        <button
+            class="nav-tab"
+            onclick="switchView('disconnected',this)">
+
             ⚡ Desenganchadas
-            <span class="badge-count" id="badge-disconnected">0</span>
+
+            <span
+                class="badge-count"
+                id="badge-disconnected">
+
+                0
+
+            </span>
+
         </button>
 
-        <button class="nav-tab" onclick="switchView('unauth',this)">
+        <button
+            class="nav-tab"
+            onclick="switchView('unauth',this)">
+
             🔐 Autorización
-            <span class="badge-count" id="badge-unauth">0</span>
+
+            <span
+                class="badge-count"
+                id="badge-unauth">
+
+                0
+
+            </span>
+
         </button>
 
-        <button class="nav-tab" onclick="switchView('authed',this)">
+        <button
+            class="nav-tab"
+            onclick="switchView('authed',this)">
+
             ✅ Autorizadas
+
         </button>
 
-        <button class="nav-tab" onclick="switchView('eventos',this)">
+        <button
+            class="nav-tab"
+            onclick="switchView('eventos',this)">
+
             📜 Eventos
+
         </button>
 
     </nav>
