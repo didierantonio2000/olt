@@ -1,2405 +1,1397 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartOLT NMS Pro</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SmartOLT NMS Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ─── TOKENS ─── */
+:root {
+  --green:    #00c07f;
+  --green-dk: #009f6a;
+  --green-bg: rgba(0,192,127,.10);
+  --red:      #f03e3e;
+  --red-bg:   rgba(240,62,62,.10);
+  --amber:    #f59e0b;
+  --amber-bg: rgba(245,158,11,.10);
+  --blue:     #3b82f6;
+  --blue-bg:  rgba(59,130,246,.10);
+  --purple:   #8b5cf6;
+  --purple-bg:rgba(139,92,246,.10);
+
+  /* surfaces */
+  --bg:       #f1f5f9;
+  --card:     #ffffff;
+  --border:   #e2e8f0;
+  --nav-bg:   #0f172a;
+  --header-bg:#0f172a;
+
+  /* text */
+  --tx:       #0f172a;
+  --tx-muted: #64748b;
+
+  /* sizes */
+  --radius:   14px;
+  --radius-sm:8px;
+  --shadow:   0 1px 4px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.12);
+
+  /* type */
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+}
+body.dark {
+  --bg: #0a0f1a; --card: #121d2e; --border: #1e3048;
+  --tx: #e2e8f0; --tx-muted: #7ca0c0;
+  --nav-bg:#060e1a; --header-bg:#060e1a;
+}
+
+/* ─── RESET ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.5;transition:background .3s,color .3s;overscroll-behavior:none}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select,textarea{font-family:inherit}
+a{text-decoration:none;color:inherit}
+
+/* ─── SCROLL TO TOP ─── */
 #btnTop{
-
-    position:fixed;
-
-    bottom:20px;
-
-    right:20px;
-
-    width:55px;
-
-    height:55px;
-
-    border:none;
-
-    border-radius:50%;
-
-    background:#2563eb;
-
-    color:white;
-
-    font-size:24px;
-
-    cursor:pointer;
-
-    display:none;
-
-    z-index:9999;
-
-    box-shadow:0 8px 20px rgba(0,0,0,.35);
-
-    transition:.3s;
-
+  position:fixed;bottom:76px;right:16px;
+  width:44px;height:44px;
+  border-radius:50%;
+  background:var(--green);color:#fff;
+  font-size:18px;display:none;
+  align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(0,192,127,.4);
+  z-index:900;transition:.25s;
 }
+#btnTop:hover{transform:scale(1.08)}
 
-#btnTop:hover{
-
-    transform:scale(1.1);
-
-    background:#1d4ed8;
-
+/* ─── HEADER ─── */
+.header{
+  background:var(--header-bg);
+  padding:0 16px;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  height:58px;
+  position:sticky;top:0;z-index:200;
+  border-bottom:1px solid rgba(255,255,255,.05);
 }
-
-@media(max-width:768px){
-
-    #btnTop{
-
-        width:50px;
-        height:50px;
-        font-size:20px;
-
-        bottom:15px;
-        right:15px;
-
-    }
-
-}
-  /*==========================
-        HEADER
-==========================*/
-
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:15px;
-
-    padding:15px 20px;
-
-    background:#0f172a;
-    color:#fff;
-
-    border-bottom:1px solid rgba(255,255,255,.08);
-}
-
-.header-left,
-.header-right{
-
-    display:flex;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:10px;
-
-}
-
+.header-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .logo{
-
-    display:flex;
-    align-items:center;
-    gap:10px;
-
+  display:flex;align-items:center;gap:8px;
+  font-size:17px;font-weight:800;color:#fff;white-space:nowrap;letter-spacing:-.4px;
 }
-
 .logo-icon{
+  width:32px;height:32px;background:var(--green);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.logo span{color:var(--green)}
+.olt-select{
+  min-width:0;flex:1;max-width:200px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  color:#fff;padding:6px 10px;border-radius:8px;
+  font-size:13px;font-weight:600;cursor:pointer;
+}
+.olt-select option{color:#000;background:#fff}
+.header-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
 
-    font-size:34px;
+/* ─── HEADER BUTTONS ─── */
+.hbtn{
+  display:flex;align-items:center;gap:4px;
+  padding:6px 10px;border-radius:8px;
+  font-size:12px;font-weight:700;
+  transition:.2s;white-space:nowrap;
+  background:rgba(255,255,255,.1);color:#fff;
+  border:1px solid rgba(255,255,255,.1);
+}
+.hbtn:hover{background:rgba(255,255,255,.18)}
+.hbtn.green{background:var(--green);border-color:transparent}
+.hbtn.green:hover{background:var(--green-dk)}
+.hbtn-icon{
+  width:34px;height:34px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+  background:rgba(255,255,255,.1);color:#fff;
+  border:1px solid rgba(255,255,255,.1);
+  transition:.2s;flex-shrink:0;
+}
+.hbtn-icon:hover{background:rgba(255,255,255,.18)}
 
+/* hide text labels on very small screens */
+@media(max-width:480px){
+  .hbtn .btn-label{display:none}
+  .hbtn{padding:6px 8px;gap:0}
 }
 
-.logo h2{
-
-    margin:0;
-    font-size:22px;
-
+/* ─── STATUS PILL ─── */
+.status-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:20px;
+  background:rgba(255,255,255,.07);
+  font-size:11px;font-weight:700;color:rgba(255,255,255,.7);
+  white-space:nowrap;
 }
-
-.logo small{
-
-    color:#94a3b8;
-
+.s-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);flex-shrink:0;
+  animation:blink 1.8s infinite;
 }
+.s-dot.scanning{background:var(--amber)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@media(max-width:600px){.status-pill{display:none}}
 
-.olt-selector{
-
-    min-width:220px;
-    padding:10px 15px;
-
-    border:none;
-    border-radius:10px;
-
-    background:#1e293b;
-    color:white;
-
+/* ─── TOOLBAR (segunda fila móvil) ─── */
+.toolbar{
+  display:none;/* shown below 600px */
+  background:var(--nav-bg);
+  padding:8px 12px;
+  gap:6px;
+  border-bottom:1px solid rgba(255,255,255,.04);
 }
+@media(max-width:600px){.toolbar{display:flex;flex-wrap:wrap;align-items:center}}
+.toolbar .status-pill{display:flex}
 
-/*==========================
-        BOTONES
-==========================*/
-
-.btn{
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    gap:8px;
-
-    padding:10px 16px;
-
-    border:none;
-    border-radius:10px;
-
-    cursor:pointer;
-
-    transition:.25s;
-
-    font-weight:600;
-
+/* ─── NAV TABS ─── */
+.nav{
+  background:var(--nav-bg);
+  display:flex;
+  overflow-x:auto;
+  scrollbar-width:none;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  position:sticky;top:58px;z-index:190;
 }
-
-.btn:hover{
-
-    transform:translateY(-2px);
-
-}
-
-.btn-light{
-
-    background:#1e293b;
-    color:white;
-
-}
-
-.btn-primary{
-
-    background:#2563eb;
-    color:white;
-
-}
-
-.btn-success{
-
-    background:#16a34a;
-    color:white;
-
-}
-
-/*==========================
-      ESTADO
-==========================*/
-
-.scan-status{
-
-    display:flex;
-    align-items:center;
-
-    gap:8px;
-
-    padding:8px 14px;
-
-    background:#1e293b;
-
-    border-radius:30px;
-
-}
-
-.scan-dot{
-
-    width:10px;
-    height:10px;
-
-    border-radius:50%;
-
-    background:#22c55e;
-
-    animation:pulse 1.5s infinite;
-
-}
-
-@keyframes pulse{
-
-0%{
-box-shadow:0 0 0 0 rgba(34,197,94,.7);
-}
-
-70%{
-box-shadow:0 0 0 10px transparent;
-}
-
-100%{
-box-shadow:0 0 0 0 transparent;
-}
-
-}
-
-/*==========================
-      MENU
-==========================*/
-
-.nav-wrapper{
-
-    width:100%;
-    overflow-x:auto;
-    overflow-y:hidden;
-
-    background:#111827;
-
-    -webkit-overflow-scrolling:touch;
-
-    scrollbar-width:none;
-
-}
-
-.nav-wrapper::-webkit-scrollbar{
-
-    display:none;
-
-}
-
-.nav-tabs{
-
-    display:flex;
-    flex-wrap:nowrap;
-
-    gap:10px;
-
-    padding:12px;
-
-    width:max-content;
-
-}
-
+.nav::-webkit-scrollbar{display:none}
 .nav-tab{
-
-    flex:0 0 auto;
-
-    display:flex;
-    align-items:center;
-    gap:8px;
-
-    white-space:nowrap;
-
-    padding:12px 18px;
-
-    border:none;
-
-    border-radius:12px;
-
-    background:#1f2937;
-
-    color:white;
-
-    cursor:pointer;
-
-    transition:.25s;
-
-    font-weight:600;
-
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:6px;
+  padding:11px 14px;
+  font-size:13px;font-weight:700;
+  color:rgba(255,255,255,.45);
+  border-bottom:2.5px solid transparent;
+  white-space:nowrap;
+  transition:.2s;
+}
+.nav-tab:hover{color:rgba(255,255,255,.8)}
+.nav-tab.active{color:black;border-bottom-color:var(--green)}
+.nav-badge{
+  background:var(--red);color:#fff;
+  font-size:10px;font-weight:800;
+  padding:1px 5px;border-radius:10px;min-width:16px;text-align:center;
 }
 
-.nav-tab:hover{
+/* ─── MAIN ─── */
+.main{max-width:1600px;margin:0 auto;padding:16px}
+.view{display:none}
+.view.active{display:block}
 
-    background:#2563eb;
-
+/* ─── KPI GRID ─── */
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;margin-bottom:16px;
 }
+@media(min-width:900px){.kpi-grid{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:400px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 
-.nav-tab.active{
-
-    background:#2563eb;
-
-    box-shadow:0 5px 15px rgba(37,99,235,.35);
-
+.kpi{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  cursor:pointer;
+  transition:.2s;
+  box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
 }
-
-.badge-count{
-
-    background:#ef4444;
-    color:white;
-
-    padding:2px 8px;
-
-    border-radius:20px;
-
-    font-size:12px;
-
+.kpi::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;
+  height:3px;background:var(--kpi-c,var(--green));
 }
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.kpi-label{font-size:10px;font-weight:800;color:var(--tx-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-value{font-size:26px;font-weight:900;color:var(--kpi-c,var(--green));line-height:1}
+.kpi-sub{font-size:10px;color:var(--tx-muted);margin-top:4px}
 
-/*==========================
-      RESPONSIVE
-==========================*/
+/* ─── SECTION HEADER ─── */
+.sec-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.sec-title{font-size:15px;font-weight:800}
+.sec-sub{font-size:12px;color:var(--tx-muted)}
 
-@media (max-width:900px){
+/* ─── CARDS ─── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
 
-.topbar{
+/* ─── CHARTS ─── */
+.charts-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px}
+@media(min-width:700px){.charts-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1200px){.charts-grid{grid-template-columns:repeat(3,1fr)}}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.chart-card-title{font-size:13px;font-weight:700;margin-bottom:12px;color:var(--tx)}
+.chart-wrap{position:relative;height:220px}
 
-flex-direction:column;
-align-items:stretch;
+/* ─── PON GRID ─── */
+.pons-grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:520px){.pons-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.pons-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1300px){.pons-grid{grid-template-columns:repeat(4,1fr)}}
 
+.pon-card{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:16px;
+  cursor:pointer;transition:.25s;box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
 }
-
-.header-left,
-.header-right{
-
-justify-content:center;
-
+.pon-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--green),var(--blue));
+  transform:scaleX(0);transform-origin:left;transition:.3s;
 }
+.pon-card:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.pon-card:hover::before{transform:scaleX(1)}
+.pon-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.pon-name{font-size:15px;font-weight:800;color:var(--green)}
+.pon-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.ps{background:var(--bg);border-radius:var(--radius-sm);padding:8px 10px}
+.ps-l{font-size:10px;font-weight:700;color:var(--tx-muted);text-transform:uppercase}
+.ps-v{font-size:15px;font-weight:800;margin-top:2px}
+.pon-bar{height:5px;border-radius:3px;background:var(--border);overflow:hidden;margin:8px 0}
+.pon-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+.pon-footer{font-size:11px;color:var(--tx-muted);display:flex;justify-content:space-between;margin-bottom:10px}
+.pon-actions{display:flex;gap:6px}
 
-.logo{
-
-justify-content:center;
-
+/* ─── TABLE CARD ─── */
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.table-head{
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;
 }
-
-.olt-selector{
-
-width:100%;
-
+.table-title{font-size:14px;font-weight:800}
+.table-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%}
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-wrap input{
+  width:100%;
+  padding:8px 12px 8px 32px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  font-size:13px;
+  background:var(--bg);color:var(--tx);
 }
-
+.search-wrap input:focus{border-color:var(--green);outline:none;box-shadow:0 0 0 3px rgba(0,192,127,.12)}
+.search-wrap::before{
+  content:'⌕';position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  font-size:16px;color:var(--tx-muted);pointer-events:none;
 }
-
-@media (max-width:768px){
-
-.topbar{
-
-padding:12px;
-
+select.filt{
+  padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:12px;background:var(--bg);color:var(--tx);
 }
-
-.header-left,
-.header-right{
-
-width:100%;
-justify-content:center;
-
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+th{
+  background:var(--bg);padding:10px 14px;
+  text-align:left;font-size:10px;font-weight:800;
+  color:var(--tx-muted);text-transform:uppercase;letter-spacing:.5px;
+  border-bottom:2px solid var(--green);white-space:nowrap;
 }
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:rgba(0,192,127,.04)}
+.empty-row{text-align:center;padding:40px;color:var(--tx-muted)}
+.tbl-footer{padding:10px 16px;font-size:12px;color:var(--tx-muted);border-top:1px solid var(--border)}
 
-.logo{
+/* ─── BADGES ─── */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.b-online{background:var(--green-bg);color:#059669}
+.b-offline{background:var(--red-bg);color:#dc2626}
+.b-warn{background:var(--amber-bg);color:#b45309}
+.b-info{background:var(--blue-bg);color:#1d4ed8}
+.b-purple{background:var(--purple-bg);color:#6d28d9}
+.b-gray{background:rgba(100,116,139,.12);color:var(--tx-muted)}
 
-width:100%;
-justify-content:center;
+/* ─── POWER ─── */
+.pwr{display:inline-flex;align-items:center;gap:5px}
+.pwr-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pw-good{background:var(--green)}
+.pw-warn{background:var(--amber)}
+.pw-bad {background:var(--red)}
+.pw-null{background:#cbd5e1}
+.pwr-val{font-weight:700;font-size:12px;font-family:var(--font-mono)}
 
-}
-
+/* ─── BUTTONS ─── */
 .btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:7px 12px;border-radius:var(--radius-sm);
+  font-size:12px;font-weight:700;
+  transition:.2s;white-space:nowrap;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:var(--green-dk)}
+.btn-red{background:var(--red);color:#fff}
+.btn-amber{background:var(--amber);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-purple{background:var(--purple);color:#fff}
+.btn-ghost{background:var(--bg);color:var(--tx);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--green);color:var(--green)}
+.btn-xs{padding:4px 8px;font-size:11px;border-radius:6px}
+.btn-sm{padding:6px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.btn-close{
+  width:30px;height:30px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;color:var(--tx-muted);font-size:20px;
+}
+.btn-close:hover{background:var(--bg);color:var(--tx)}
 
-padding:10px 12px;
-font-size:14px;
+/* ─── DISCONNECTED ─── */
+.disc-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:520px){.disc-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.disc-grid{grid-template-columns:repeat(3,1fr)}}
+.disc-card{
+  background:var(--card);border:1.5px solid rgba(240,62,62,.3);
+  border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);
+}
+.disc-card.old{border-color:rgba(100,116,139,.2)}
+.disc-title{font-size:13px;font-weight:800;color:var(--red);margin-bottom:8px}
+.disc-title.old{color:var(--tx-muted)}
+.disc-row{font-size:12px;color:var(--tx-muted);margin-bottom:3px}
+.disc-row strong{color:var(--tx);font-family:var(--font-mono)}
+.disc-actions{display:flex;gap:6px;margin-top:10px}
 
+/* ─── UNAUTH ─── */
+.unauth-card{
+  background:var(--card);border:1.5px solid var(--purple-bg);
+  border-radius:var(--radius);padding:14px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;margin-bottom:10px;box-shadow:var(--shadow);
+}
+.ua-mac{font-size:15px;font-weight:800;font-family:var(--font-mono);color:var(--purple)}
+.ua-meta{font-size:11px;color:var(--tx-muted);margin-top:3px}
+
+/* ─── MODAL ─── */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);
+  display:none;align-items:flex-start;justify-content:center;
+  z-index:1000;overflow-y:auto;backdrop-filter:blur(4px);
+  padding:20px;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--card);
+  width:100%;max-width:640px;
+  border-radius:var(--radius);
+  padding:22px;
+  box-shadow:var(--shadow-lg);
+  animation:slideUp .2s ease-out;
+  margin:auto;
+}
+.modal-lg{max-width:880px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-title{font-size:16px;font-weight:800}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.form-group{margin-bottom:14px}
+label{display:block;font-size:10px;font-weight:800;color:var(--tx-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+input,select,textarea{
+  width:100%;padding:9px 12px;
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:13px;background:var(--card);color:var(--tx);
+  transition:.15s;
+}
+input:focus,select:focus{border-color:var(--green);outline:none;box-shadow:0 0 0 3px rgba(0,192,127,.12)}
+input[readonly]{background:var(--bg);color:var(--tx-muted)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.form-row{grid-template-columns:1fr}}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+
+/* ─── OPTICAL ─── */
+.optical-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0}
+@media(max-width:600px){.optical-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:380px){.optical-grid{grid-template-columns:repeat(2,1fr)}}
+.opt-metric{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.opt-lbl{font-size:9px;font-weight:800;color:var(--tx-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.opt-val{font-size:18px;font-weight:900;line-height:1}
+.opt-unit{font-size:9px;color:var(--tx-muted);margin-top:3px}
+
+/* ─── HISTORY ─── */
+.hist-wrap{position:relative;height:180px;margin-top:10px}
+
+/* ─── ALERT BANNER ─── */
+.alert-bar{
+  background:var(--red-bg);border:1px solid rgba(240,62,62,.25);
+  border-radius:var(--radius-sm);padding:10px 14px;
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:700;color:var(--red);
+  margin-bottom:12px;
 }
 
-.olt-selector{
+/* ─── LOADING ─── */
+.loader{text-align:center;padding:48px 20px;color:var(--tx-muted)}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+.spinner-sm{width:13px;height:13px;border-width:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{margin-top:10px;font-size:13px;font-weight:600}
 
-width:100%;
-
+/* ─── NOTIFICATION ─── */
+.notif{
+  position:fixed;top:16px;right:16px;
+  padding:12px 16px;border-radius:10px;
+  box-shadow:var(--shadow-lg);z-index:9999;
+  animation:slideInR .25s ease-out;
+  font-size:13px;font-weight:700;
+  display:flex;align-items:center;gap:8px;
+  max-width:320px;line-height:1.3;
 }
+.n-success{background:#10b981;color:#fff}
+.n-error  {background:#ef4444;color:#fff}
+.n-info   {background:#3b82f6;color:#fff}
+.n-warning{background:#f59e0b;color:#fff}
+@keyframes slideInR{from{transform:translateX(340px);opacity:0}to{transform:translateX(0);opacity:1}}
 
-.nav-tab{
+/* ─── EVENT LOG ─── */
+.ev-log{padding:14px;max-height:560px;overflow-y:auto;font-size:13px}
+.ev-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.ev-row:last-child{border:0}
+.ev-ts{font-size:10px;color:var(--tx-muted);white-space:nowrap;margin-top:1px;flex-shrink:0}
+.ev-type{font-size:10px;font-weight:800;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+.ev-msg{font-size:12px;color:var(--tx)}
 
-padding:10px 15px;
-font-size:14px;
+/* ─── AUTHED ─── */
+.authed-block{margin-bottom:14px}
 
+/* ─── MOBILE BOTTOM PADDING ─── */
+@media(max-width:600px){
+  .main{padding:10px}
+  .kpi-grid{gap:8px}
+  .kpi{padding:10px}
+  .kpi-value{font-size:22px}
 }
-
-}
-
-@media (max-width:480px){
-
-.header-left,
-.header-right{
-
-flex-direction:column;
-align-items:stretch;
-
-}
-
-.btn{
-
-width:100%;
-
-}
-
-.olt-selector{
-
-width:100%;
-
-}
-
-.logo h2{
-
-font-size:18px;
-
-}
-
-.logo small{
-
-display:none;
-
-}
-
-}
-    :root {
-      --primary: #00a86b;
-      --primary-dark: #007a4d;
-      --secondary: #1e40af;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --info: #3b82f6;
-      --purple: #8b5cf6;
-      --bg: #f0f4f8;
-      --card: #ffffff;
-      --border: #e5e7eb;
-      --text: #1f2937;
-      --text-muted: #6b7280;
-      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.06);
-      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
-    }
-    body.dark-mode {
-      --bg: #0f172a; --card: #1e293b; --border: #334155;
-      --text: #f1f5f9; --text-muted: #94a3b8;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
-    body { background:var(--bg); color:var(--text); line-height:1.6; transition:background 0.3s,color 0.3s; }
-
-    /* ── Header ── */
-    header { background:linear-gradient(135deg,#00a86b 0%,#007a4d 100%); color:#fff; padding:14px 24px; display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow-lg); position:sticky; top:0; z-index:200; }
-    .header-left { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-    .logo { font-size:20px; font-weight:900; letter-spacing:-0.5px; white-space:nowrap; }
-    .olt-selector { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:#fff; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:600; font-size:13px; }
-    .olt-selector option { color:#000; background:#fff; }
-    .header-right { display:flex; gap:10px; align-items:center; }
-    .scan-status { font-size:12px; color:rgba(255,255,255,0.8); display:flex; align-items:center; gap:6px; }
-    .scan-dot { width:8px; height:8px; border-radius:50%; background:#10b981; animation:pulse 2s infinite; }
-    .scan-dot.scanning { background:#f59e0b; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-    /* ── Buttons ── */
-    .btn { padding:8px 14px; border-radius:8px; border:0; cursor:pointer; font-weight:600; font-size:12px; transition:all 0.2s; display:inline-flex; align-items:center; gap:5px; }
-    .btn-primary { background:var(--primary); color:#fff; }
-    .btn-primary:hover { background:var(--primary-dark); transform:translateY(-1px); }
-    .btn-secondary { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); }
-    .btn-secondary:hover { background:rgba(255,255,255,0.25); }
-    .btn-danger { background:var(--danger); color:#fff; }
-    .btn-warning { background:var(--warning); color:#fff; }
-    .btn-success { background:var(--success); color:#fff; }
-    .btn-info { background:var(--info); color:#fff; }
-    .btn-purple { background:var(--purple); color:#fff; }
-    .btn-sm { padding:5px 10px; font-size:11px; }
-    .btn-xs { padding:3px 8px; font-size:10px; }
-    .btn-close { background:transparent; border:none; color:var(--text-muted); font-size:22px; cursor:pointer; padding:0; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; }
-    .btn-close:hover { background:var(--bg); color:var(--text); }
-    .btn:disabled { opacity:0.6; cursor:not-allowed; transform:none !important; }
-
-    /* ── Nav Tabs ── */
-    .nav-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); background:var(--card); padding:0 24px; box-shadow:var(--shadow); overflow-x:auto; }
-    .nav-tab { padding:13px 16px; border:0; background:transparent; cursor:pointer; font-weight:600; color:var(--text-muted); border-bottom:3px solid transparent; transition:all 0.2s; white-space:nowrap; font-size:13px; }
-    .nav-tab:hover { color:var(--text); }
-    .nav-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
-    .badge-count { background:var(--danger); color:#fff; border-radius:10px; padding:1px 6px; font-size:10px; margin-left:4px; }
-
-    /* ── Layout ── */
-    .container { max-width:1900px; margin:0 auto; padding:20px 24px; }
-    .view { display:none; }
-    .view.active { display:block; }
-
-    /* ── KPI Cards ── */
-    .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
-    .kpi-card { background:var(--card); border-radius:12px; padding:18px; border:1px solid var(--border); cursor:pointer; transition:all 0.2s; box-shadow:var(--shadow); position:relative; overflow:hidden; }
-    .kpi-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--kpi-color,var(--primary)); }
-    .kpi-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); }
-    .kpi-label { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
-    .kpi-value { font-size:30px; font-weight:900; color:var(--kpi-color,var(--primary)); }
-    .kpi-sub { font-size:11px; color:var(--text-muted); margin-top:4px; }
-
-    /* ── Charts Grid ── */
-    .charts-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); gap:18px; margin-bottom:20px; }
-    .chart-card { background:var(--card); border-radius:12px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow); transition:all 0.3s; }
-    .chart-card:hover { box-shadow:var(--shadow-lg); border-color:var(--primary); }
-    .chart-title { font-size:14px; font-weight:700; margin-bottom:14px; color:var(--text); display:flex; justify-content:space-between; align-items:center; }
-    .chart-wrap { position:relative; height:260px; }
-
-    /* ── PON Cards ── */
-    .pons-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
-    .pon-card { background:var(--card); border-radius:12px; padding:18px; border:2px solid var(--border); cursor:pointer; transition:all 0.3s; box-shadow:var(--shadow); position:relative; overflow:hidden; }
-    .pon-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--primary),var(--success)); transform:scaleX(0); transform-origin:left; transition:transform 0.3s; }
-    .pon-card:hover { border-color:var(--primary); transform:translateY(-3px); box-shadow:var(--shadow-lg); }
-    .pon-card:hover::before { transform:scaleX(1); }
-    .pon-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-    .pon-title { font-size:16px; font-weight:800; color:var(--primary); }
-    .pon-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
-    .pon-stat { background:var(--bg); border-radius:8px; padding:8px 10px; }
-    .pon-stat-label { font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; }
-    .pon-stat-value { font-size:16px; font-weight:800; color:var(--text); margin-top:2px; }
-    .pon-power-bar { height:6px; border-radius:3px; background:var(--border); margin:10px 0; overflow:hidden; }
-    .pon-power-fill { height:100%; border-radius:3px; transition:width 0.5s; }
-    .pon-actions { display:flex; gap:6px; flex-wrap:wrap; }
-    .pon-chart-mini { height:80px; margin:10px 0; }
-
-    /* ── Table ── */
-    .table-card { background:var(--card); border-radius:12px; border:1px solid var(--border); overflow:hidden; box-shadow:var(--shadow); }
-    .table-header { padding:16px 20px; border-bottom:2px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; background:linear-gradient(135deg,var(--bg) 0%,transparent 100%); }
-    .table-title { font-size:15px; font-weight:700; }
-    .table-controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .search-box { position:relative; }
-    .search-box input { padding:8px 12px 8px 34px; border-radius:8px; border:1px solid var(--border); font-size:13px; background:var(--card); color:var(--text); width:260px; }
-    .search-box::before { content:'🔍'; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; }
-    .search-box input:focus { border-color:var(--primary); outline:none; box-shadow:0 0 0 3px rgba(0,168,107,0.1); }
-    select.filter-select { padding:8px 12px; border-radius:8px; border:1px solid var(--border); font-size:13px; background:var(--card); color:var(--text); }
-    table { width:100%; border-collapse:collapse; font-size:13px; }
-    th { background:var(--bg); padding:12px 14px; text-align:left; font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid var(--primary); white-space:nowrap; }
-    td { padding:12px 14px; border-bottom:1px solid var(--border); transition:background 0.15s; vertical-align:middle; }
-    tr:hover td { background:rgba(0,168,107,0.04); }
-    tr:last-child td { border-bottom:0; }
-    .table-empty { text-align:center; padding:40px; color:var(--text-muted); }
-
-    /* ── Badges ── */
-    .badge { padding:4px 10px; border-radius:6px; font-size:10px; font-weight:700; text-transform:uppercase; display:inline-block; }
-    .badge-online { background:rgba(16,185,129,0.15); color:#059669; }
-    .badge-offline { background:rgba(239,68,68,0.15); color:#dc2626; }
-    .badge-critical { background:rgba(245,158,11,0.15); color:#d97706; }
-    .badge-warning { background:rgba(245,158,11,0.15); color:#d97706; }
-    .badge-info { background:rgba(59,130,246,0.15); color:#2563eb; }
-    .badge-auth { background:rgba(139,92,246,0.15); color:#7c3aed; }
-
-    /* ── Power Indicator ── */
-    .power-indicator { display:inline-flex; align-items:center; gap:6px; }
-    .power-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-    .power-good { background:#10b981; }
-    .power-warn { background:#f59e0b; }
-    .power-critical { background:#ef4444; }
-    .power-null { background:#d1d5db; }
-    .power-value { font-weight:700; font-size:12px; }
-
-    /* ── Temperature ── */
-    .temp-indicator { display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:700; }
-    .temp-normal { color:#10b981; }
-    .temp-warm { color:#f59e0b; }
-    .temp-hot { color:#ef4444; }
-
-    /* ── Modal ── */
-    .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); display:none; align-items:center; justify-content:center; z-index:1000; overflow-y:auto; backdrop-filter:blur(4px); }
-    .modal-overlay.open { display:flex; }
-    .modal { background:var(--card); width:90%; max-width:700px; border-radius:16px; padding:28px; box-shadow:var(--shadow-lg); animation:slideUp 0.25s ease-out; margin:20px 0; max-height:92vh; overflow-y:auto; }
-    .modal-lg { max-width:900px; }
-    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; }
-    .modal-title { font-size:18px; font-weight:800; }
-    @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
-    .form-group { margin-bottom:16px; }
-    label { display:block; font-size:11px; font-weight:700; margin-bottom:5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.3px; }
-    input, select, textarea { width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:var(--card); color:var(--text); }
-    input:focus, select:focus { border-color:var(--primary); outline:none; box-shadow:0 0 0 3px rgba(0,168,107,0.1); }
-    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
-
-    /* ── Optical Metrics Panel ── */
-    .optical-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin:16px 0; }
-    .optical-metric { background:var(--bg); border-radius:10px; padding:12px; text-align:center; border:1px solid var(--border); }
-    .optical-metric-label { font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px; }
-    .optical-metric-value { font-size:20px; font-weight:900; }
-    .optical-metric-unit { font-size:10px; color:var(--text-muted); }
-
-    /* ── History Chart ── */
-    .history-section { margin-top:20px; }
-    .history-chart-wrap { position:relative; height:200px; }
-
-    /* ── Notification ── */
-    .notification { position:fixed; top:20px; right:20px; padding:14px 18px; border-radius:10px; box-shadow:var(--shadow-lg); z-index:10000; animation:slideInRight 0.3s ease-out; font-weight:600; font-size:13px; display:flex; align-items:center; gap:8px; max-width:380px; }
-    .notification-success { background:#10b981; color:#fff; }
-    .notification-error { background:#ef4444; color:#fff; }
-    .notification-info { background:#3b82f6; color:#fff; }
-    .notification-warning { background:#f59e0b; color:#fff; }
-    @keyframes slideInRight { from{transform:translateX(400px);opacity:0} to{transform:translateX(0);opacity:1} }
-
-    /* ── Loading ── */
-    .loading { text-align:center; padding:60px 20px; color:var(--text-muted); }
-    .spinner { display:inline-block; width:36px; height:36px; border:4px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin 0.8s linear infinite; }
-    .spinner-sm { width:14px; height:14px; border-width:2px; }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .loading-text { margin-top:12px; font-size:14px; font-weight:600; }
-
-    /* ── Disconnected ONTs ── */
-    .disconnected-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
-    .disconnected-card { background:var(--card); border-radius:12px; padding:16px; border:2px solid rgba(239,68,68,0.3); box-shadow:var(--shadow); }
-    .disconnected-card:hover { border-color:var(--danger); }
-    .disconnected-title { font-size:14px; font-weight:800; color:var(--danger); margin-bottom:10px; }
-    .disconnected-info { font-size:12px; color:var(--text-muted); margin-bottom:4px; }
-
-    /* ── Unauth ONTs ── */
-    .unauth-card { background:var(--card); border-radius:12px; padding:16px; border:2px solid rgba(139,92,246,0.3); box-shadow:var(--shadow); margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
-    .unauth-info { flex:1; }
-    .unauth-mac { font-size:14px; font-weight:800; font-family:monospace; }
-    .unauth-meta { font-size:12px; color:var(--text-muted); margin-top:4px; }
-
-    /* ── Section Headers ── */
-    .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
-    .section-title { font-size:16px; font-weight:800; }
-    .section-sub { font-size:12px; color:var(--text-muted); margin-top:2px; }
-
-    /* ── Alert Banner ── */
-    .alert-banner { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; color:var(--danger); }
-
-    /* ── Responsive ── */
-    @media(max-width:768px) {
-      .kpi-grid { grid-template-columns:repeat(2,1fr); }
-      .charts-grid { grid-template-columns:1fr; }
-      .pons-grid { grid-template-columns:1fr; }
-      .search-box input { width:100%; }
-      .form-row { grid-template-columns:1fr; }
-      header { padding:12px 16px; }
-      .container { padding:16px; }
-    }
-  </style>
+</style>
 </head>
-  <button id="btnTop" onclick="scrollToTop()">
-    ⬆️
-</button>
+
 <body>
+<button id="btnTop" onclick="scrollToTop()">↑</button>
 
-<header class="topbar">
-
-    <div class="header-left">
-
-        <div class="logo">
-            <span class="logo-icon">🌐</span>
-
-            <div class="logo-text">
-                <h2>SmartOLT</h2>
-                <small>1A-NETWORKS</small>
-            </div>
-        </div>
-
-        <select
-            class="olt-selector"
-            id="olt-select"
-            onchange="switchOLT()">
-        </select>
-
-        <button
-            class="btn btn-light"
-            onclick="showAddOLTModal()">
-
-            ➕
-            <span>OLT</span>
-
-        </button>
-
-        <button
-            class="btn btn-light"
-            onclick="showEditOLTModal()">
-
-            ✏️
-            <span>Editar</span>
-
-        </button>
-
-        <div class="scan-status">
-
-            <div
-                class="scan-dot"
-                id="scan-dot">
-            </div>
-
-            <span id="scan-label">
-                Listo
-            </span>
-
-        </div>
-
+<!-- ─── HEADER ─── -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">
+      <div class="logo-icon">🌐</div>
+      <span>Smart<span>OLT</span></span>
     </div>
-
-    <div class="header-right">
-
-        <button
-            class="btn btn-light"
-            onclick="exportCSV()">
-
-            📥
-            <span>CSV</span>
-
-        </button>
-
-        <button
-            class="btn btn-success"
-            id="btn-save-local"
-            onclick="saveLocalData()"
-            title="Guardar información local">
-
-            💾
-            <span>Guardar</span>
-
-        </button>
-
-        <button
-            class="btn btn-primary"
-            onclick="syncData()">
-
-            🔄
-            <span>Sincronizar</span>
-
-        </button>
-
-        <button
-            class="btn btn-light"
-            onclick="toggleTheme()">
-
-            🌙
-
-        </button>
-
+    <select class="olt-select" id="olt-select" onchange="switchOLT()"></select>
+  </div>
+  <div class="header-right">
+    <div class="status-pill">
+      <div class="s-dot" id="scan-dot"></div>
+      <span id="scan-label">Listo</span>
     </div>
-
+    <button class="hbtn" onclick="showAddOLTModal()">➕ <span class="btn-label">OLT</span></button>
+    <button class="hbtn" onclick="showEditOLTModal()">✏️</button>
+    <button class="hbtn green" onclick="syncData()">🔄 <span class="btn-label">Sync</span></button>
+    <button class="hbtn-icon" onclick="exportCSV()" title="Exportar CSV">📥</button>
+    <button class="hbtn-icon" onclick="saveLocalData()" title="Guardar local">💾</button>
+    <button class="hbtn-icon" onclick="toggleTheme()" title="Tema">🌙</button>
+  </div>
 </header>
 
-<!-- ===================== -->
-<!--      MENÚ            -->
-<!-- ===================== -->
-
-<div class="nav-wrapper">
-
-    <nav class="nav-tabs">
-
-        <button
-            class="nav-tab active"
-            onclick="switchView('dashboard',this)">
-
-            📊 Dashboard
-
-        </button>
-
-        <button
-            class="nav-tab"
-            onclick="switchView('pons',this)">
-
-            🔌 PONs
-
-        </button>
-
-        <button
-            class="nav-tab"
-            onclick="switchView('onts',this)">
-
-            📋 ONTs
-
-        </button>
-
-        <button
-            class="nav-tab"
-            onclick="switchView('offline',this)">
-
-            ❌ Offline
-
-            <span
-                class="badge-count"
-                id="badge-offline">
-
-                0
-
-            </span>
-
-        </button>
-
-        <button
-            class="nav-tab"
-            onclick="switchView('disconnected',this)">
-
-            ⚡ Desenganchadas
-
-            <span
-                class="badge-count"
-                id="badge-disconnected">
-
-                0
-
-            </span>
-
-        </button>
-
-        <button
-            class="nav-tab"
-            onclick="switchView('unauth',this)">
-
-            🔐 Autorización
-
-            <span
-                class="badge-count"
-                id="badge-unauth">
-
-                0
-
-            </span>
-
-        </button>
-
-        <button
-            class="nav-tab"
-            onclick="switchView('authed',this)">
-
-            ✅ Autorizadas
-
-        </button>
-
-        <button
-            class="nav-tab"
-            onclick="switchView('eventos',this)">
-
-            📜 Eventos
-
-        </button>
-
-    </nav>
-
+<!-- toolbar visible solo en móvil pequeño -->
+<div class="toolbar">
+  <div class="status-pill" style="flex:1">
+    <div class="s-dot" id="scan-dot2"></div>
+    <span id="scan-label2">Listo</span>
+  </div>
 </div>
 
-<main class="container">
+<!-- ─── NAV ─── -->
+<nav class="nav">
+  <button class="nav-tab active" onclick="switchView('dashboard',this)">📊 Dashboard</button>
+  <button class="nav-tab" onclick="switchView('pons',this)">🔌 PONs</button>
+  <button class="nav-tab" onclick="switchView('onts',this)">📋 ONTs</button>
+  <button class="nav-tab" onclick="switchView('offline',this)">❌ Offline <span class="nav-badge" id="badge-offline">0</span></button>
+  <button class="nav-tab" onclick="switchView('disconnected',this)">⚡ Deseng. <span class="nav-badge" id="badge-disconnected">0</span></button>
+  <button class="nav-tab" onclick="switchView('unauth',this)">🔐 Autorizar <span class="nav-badge" id="badge-unauth">0</span></button>
+  <button class="nav-tab" onclick="switchView('authed',this)">✅ Autorizadas</button>
+  <button class="nav-tab" onclick="switchView('eventos',this)">📜 Eventos</button>
+</nav>
 
-  <!-- DASHBOARD -->
-  <div id="dashboard" class="view active">
-    <div class="kpi-grid" id="kpi-grid">
-      <div class="kpi-card" style="--kpi-color:var(--primary)" onclick="switchView('onts',null,'all')">
-        <div class="kpi-label">📊 Total ONTs</div>
-        <div class="kpi-value" id="val-total">—</div>
-        <div class="kpi-sub" id="val-total-sub">Cargando...</div>
-      </div>
-      <div class="kpi-card" style="--kpi-color:var(--success)" onclick="switchView('onts',null,'working')">
-        <div class="kpi-label">✅ Online</div>
-        <div class="kpi-value" id="val-online">—</div>
-        <div class="kpi-sub" id="val-online-sub">—</div>
-      </div>
-      <div class="kpi-card" style="--kpi-color:var(--danger)" onclick="switchView('onts',null,'offline')">
-        <div class="kpi-label">❌ Offline</div>
-        <div class="kpi-value" id="val-offline">—</div>
-        <div class="kpi-sub" id="val-offline-sub">—</div>
-      </div>
-      <div class="kpi-card" style="--kpi-color:var(--warning)" onclick="switchView('onts',null,'critical')">
-        <div class="kpi-label">⚠️ Potencia Crítica</div>
-        <div class="kpi-value" id="val-critical">—</div>
-        <div class="kpi-sub">RX &lt; -28 dBm</div>
-      </div>
-      <div class="kpi-card" style="--kpi-color:var(--info)">
-        <div class="kpi-label">🌡️ Temp. Promedio</div>
-        <div class="kpi-value" id="val-temp">—</div>
-        <div class="kpi-sub">°C promedio ONTs</div>
-      </div>
-      <div class="kpi-card" style="--kpi-color:var(--purple)" onclick="switchView('disconnected',null)">
-        <div class="kpi-label">⚡ Desenganchadas</div>
-        <div class="kpi-value" id="val-disconnected">—</div>
-        <div class="kpi-sub">Pérdida reciente</div>
-      </div>
+<main class="main">
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard" class="view active">
+  <div class="kpi-grid">
+    <div class="kpi" style="--kpi-c:var(--green)" onclick="switchView('onts',null,'all')">
+      <div class="kpi-label">Total ONTs</div>
+      <div class="kpi-value" id="val-total">—</div>
+      <div class="kpi-sub" id="val-total-sub">—</div>
     </div>
-
-    <div class="charts-grid">
-      <div class="chart-card">
-        <div class="chart-title">Estado de ONTs <span style="font-size:11px;color:var(--text-muted)" id="chart-status-sub"></span></div>
-        <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">ONTs por PON (Online / Offline)</div>
-        <div class="chart-wrap"><canvas id="chart-pons"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Distribución de Potencia RX (dBm)</div>
-        <div class="chart-wrap"><canvas id="chart-power-dist"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Potencia Promedio por PON</div>
-        <div class="chart-wrap"><canvas id="chart-power-pon"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Temperatura por PON (°C)</div>
-        <div class="chart-wrap"><canvas id="chart-temp"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Salud de Red por PON (%)</div>
-        <div class="chart-wrap"><canvas id="chart-health"></canvas></div>
-      </div>
+    <div class="kpi" style="--kpi-c:var(--green)" onclick="switchView('onts',null,'working')">
+      <div class="kpi-label">✅ Online</div>
+      <div class="kpi-value" id="val-online">—</div>
+      <div class="kpi-sub" id="val-online-sub">—</div>
+    </div>
+    <div class="kpi" style="--kpi-c:var(--red)" onclick="switchView('onts',null,'offline')">
+      <div class="kpi-label">❌ Offline</div>
+      <div class="kpi-value" id="val-offline">—</div>
+      <div class="kpi-sub" id="val-offline-sub">—</div>
+    </div>
+    <div class="kpi" style="--kpi-c:var(--amber)" onclick="switchView('onts',null,'critical')">
+      <div class="kpi-label">⚠️ Crítica</div>
+      <div class="kpi-value" id="val-critical">—</div>
+      <div class="kpi-sub">RX &lt; -28 dBm</div>
+    </div>
+    <div class="kpi" style="--kpi-c:var(--blue)">
+      <div class="kpi-label">🌡️ Temp</div>
+      <div class="kpi-value" id="val-temp">—</div>
+      <div class="kpi-sub">°C promedio</div>
+    </div>
+    <div class="kpi" style="--kpi-c:var(--purple)" onclick="switchView('disconnected',null)">
+      <div class="kpi-label">⚡ Deseng.</div>
+      <div class="kpi-value" id="val-disconnected">—</div>
+      <div class="kpi-sub">Pérdida reciente</div>
     </div>
   </div>
 
-  <!-- PONs -->
-  <div id="pons" class="view">
-    <div class="section-header">
-      <div>
-        <div class="section-title">Puertos PON</div>
-        <div class="section-sub" id="pons-sub">Seleccione una OLT para ver los puertos</div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="syncData()">🔄 Actualizar</button>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">Estado ONTs <span id="chart-status-sub" style="font-size:11px;color:var(--tx-muted)"></span></div>
+      <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
     </div>
-    <div class="pons-grid" id="pons-container">
-      <div class="loading"><div class="spinner"></div><div class="loading-text">Cargando PONs...</div></div>
+    <div class="chart-card">
+      <div class="chart-card-title">ONTs por PON</div>
+      <div class="chart-wrap"><canvas id="chart-pons"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Distribución Potencia RX</div>
+      <div class="chart-wrap"><canvas id="chart-power-dist"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Potencia Prom. por PON</div>
+      <div class="chart-wrap"><canvas id="chart-power-pon"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Temperatura por PON</div>
+      <div class="chart-wrap"><canvas id="chart-temp"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Salud de Red por PON</div>
+      <div class="chart-wrap"><canvas id="chart-health"></canvas></div>
     </div>
   </div>
+</div>
 
-  <!-- ONTs -->
-  <div id="onts" class="view">
-    <div class="table-card">
-      <div class="table-header">
-        <div class="table-title">ONTs Registradas</div>
-        <div class="table-controls">
-          <div class="search-box">
-            <input type="text" id="table-search" placeholder="Buscar por MAC, PON, ONT..." oninput="renderTable()">
-          </div>
-          <select class="filter-select" id="filter-status" onchange="renderTable()">
-            <option value="">Todos los estados</option>
-            <option value="working">Online</option>
-            <option value="offline">Offline</option>
-            <option value="critical">Potencia Crítica</option>
-          </select>
-          <select class="filter-select" id="filter-pon" onchange="renderTable()">
-            <option value="">Todos los PON</option>
-          </select>
-          <button class="btn btn-warning btn-sm" id="btn-refresh-optical" onclick="refreshAllOpticalPower()" title="Recorre todas las ONTs Online una por una y trae su RxPower/TxPower/Temperatura/Voltaje reales (igual que el botón 'Refrescar potencia' individual, pero para todas).">🔬 Actualizar Potencia (todas)</button>
+<!-- ── PONs ── -->
+<div id="pons" class="view">
+  <div class="sec-header">
+    <div>
+      <div class="sec-title">Puertos PON</div>
+      <div class="sec-sub" id="pons-sub">—</div>
+    </div>
+    <button class="btn btn-green btn-sm" onclick="syncData()">🔄 Actualizar</button>
+  </div>
+  <div class="pons-grid" id="pons-container">
+    <div class="loader"><div class="spinner"></div><div class="loader-text">Cargando…</div></div>
+  </div>
+</div>
+
+<!-- ── ONTs ── -->
+<div id="onts" class="view">
+  <div class="table-card">
+    <div class="table-head">
+      <div class="table-title">ONTs Registradas</div>
+      <div class="table-controls">
+        <div class="search-wrap">
+          <input type="text" id="table-search" placeholder="MAC, PON, ONT…" oninput="renderTable()">
         </div>
-      </div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>PON / ONT</th>
-              <th>Nombre</th>
-              <th>MAC / Serial</th>
-              <th>Estado</th>
-              <th>RX Power</th>
-              <th>TX Power</th>
-              <th>Temperatura</th>
-              <th>Voltaje</th>
-              <th>Uptime</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="ont-table-body">
-            <tr><td colspan="9" class="table-empty">Seleccione una OLT para ver las ONTs</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div style="padding:12px 20px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border)">
-        Mostrando <span id="table-count">0</span> ONTs
+        <select class="filt" id="filter-status" onchange="renderTable()">
+          <option value="">Todos</option>
+          <option value="working">Online</option>
+          <option value="offline">Offline</option>
+          <option value="critical">Crítica</option>
+        </select>
+        <select class="filt" id="filter-pon" onchange="renderTable()">
+          <option value="">Todos PON</option>
+        </select>
+        <button class="btn btn-amber btn-sm" id="btn-refresh-optical" onclick="refreshAllOpticalPower()" title="Actualiza potencia de todas las ONTs online">🔬 Potencia</button>
       </div>
     </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>PON/ONT</th><th>Nombre</th><th>MAC</th><th>Estado</th>
+            <th>RX</th><th>TX</th><th>Temp</th><th>Volt</th><th>Uptime</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="ont-table-body">
+          <tr><td colspan="10" class="empty-row">Seleccione una OLT</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tbl-footer">Mostrando <span id="table-count">0</span> ONTs</div>
   </div>
+</div>
 
-  <!-- OFFLINE -->
-  <div id="offline" class="view">
-    <div class="section-header">
-      <div>
-        <div class="section-title">❌ ONTs Offline</div>
-        <div class="section-sub" id="offline-sub">ONTs que actualmente no tienen señal</div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="syncData()">🔄 Actualizar</button>
+<!-- ── OFFLINE ── -->
+<div id="offline" class="view">
+  <div class="sec-header">
+    <div>
+      <div class="sec-title">ONTs Offline</div>
+      <div class="sec-sub" id="offline-sub">—</div>
     </div>
-    <div class="table-card">
-      <div style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>PON / ONT</th>
-              <th>MAC / Serial</th>
-              <th>Distancia</th>
-              <th>Último Online</th>
-              <th>Tiempo caído</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="offline-table-body">
-            <tr><td colspan="6" class="table-empty">Cargando...</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <button class="btn btn-green btn-sm" onclick="syncData()">🔄 Actualizar</button>
+  </div>
+  <div class="table-card">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>PON/ONT</th><th>MAC</th><th>Distancia</th><th>Último Online</th><th>Caído hace</th><th></th></tr>
+        </thead>
+        <tbody id="offline-table-body">
+          <tr><td colspan="6" class="empty-row">Cargando…</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
+</div>
 
-  <!-- DESENGANCHADAS -->
-  <div id="disconnected" class="view">
-    <div class="section-header">
-      <div>
-        <div class="section-title">⚡ ONTs Desenganchadas</div>
-        <div class="section-sub">ONTs que perdieron señal recientemente o tienen potencia crítica</div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="syncData()">🔄 Actualizar</button>
+<!-- ── DESENGANCHADAS ── -->
+<div id="disconnected" class="view">
+  <div class="sec-header">
+    <div>
+      <div class="sec-title">ONTs Desenganchadas</div>
+      <div class="sec-sub">Perdieron señal recientemente o tienen potencia crítica</div>
     </div>
-    <div id="disconnected-container">
-      <div class="loading"><div class="spinner"></div><div class="loading-text">Cargando...</div></div>
-    </div>
+    <button class="btn btn-green btn-sm" onclick="syncData()">🔄 Actualizar</button>
   </div>
+  <div id="disconnected-container">
+    <div class="loader"><div class="spinner"></div></div>
+  </div>
+</div>
 
-  <!-- AUTORIZACIÓN -->
-  <div id="unauth" class="view">
-    <div class="section-header">
-      <div>
-        <div class="section-title">🔐 ONTs No Autorizadas</div>
-        <div class="section-sub">ONTs detectadas en auto-find que aún no han sido autorizadas</div>
-      </div>
-      <button class="btn btn-purple btn-sm" onclick="loadUnauthOnts()">🔍 Escanear No Autorizadas</button>
+<!-- ── AUTORIZACIÓN ── -->
+<div id="unauth" class="view">
+  <div class="sec-header">
+    <div>
+      <div class="sec-title">ONTs No Autorizadas</div>
+      <div class="sec-sub">Detectadas en auto-find pendientes de autorizar</div>
     </div>
-    <div id="unauth-container">
-      <div class="loading"><div class="spinner"></div><div class="loading-text">Cargando...</div></div>
-    </div>
+    <button class="btn btn-purple btn-sm" onclick="loadUnauthOnts()">🔍 Escanear</button>
   </div>
+  <div id="unauth-container">
+    <div class="loader"><div class="spinner"></div></div>
+  </div>
+</div>
 
-  <!-- AUTORIZADAS POR PON -->
-  <div id="authed" class="view">
-    <div class="section-header">
-      <div>
-        <div class="section-title">✅ ONTs Autorizadas por PON</div>
-        <div class="section-sub">Lista de MACs autorizadas en cada puerto PON de la OLT</div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="loadAuthedOnts()">🔄 Consultar</button>
+<!-- ── AUTORIZADAS ── -->
+<div id="authed" class="view">
+  <div class="sec-header">
+    <div>
+      <div class="sec-title">ONTs Autorizadas por PON</div>
+      <div class="sec-sub">MACs autorizadas en cada puerto</div>
     </div>
-    <div id="authed-container">
-      <div class="loading"><div class="spinner"></div><div class="loading-text">Presiona Consultar para cargar...</div></div>
-    </div>
+    <button class="btn btn-green btn-sm" onclick="loadAuthedOnts()">🔄 Consultar</button>
   </div>
+  <div id="authed-container">
+    <div class="loader"><div class="loader-text">Presiona Consultar para cargar</div></div>
+  </div>
+</div>
 
-  <!-- EVENTOS -->
-  <div id="eventos" class="view">
-    <div class="table-card">
-      <div class="table-header">
-        <div class="table-title">📜 Registro de Eventos</div>
-        <button class="btn btn-secondary btn-sm" onclick="clearEvents()">🗑️ Limpiar</button>
-      </div>
-      <div id="event-log" style="padding:16px;max-height:600px;overflow-y:auto;font-size:13px;"></div>
+<!-- ── EVENTOS ── -->
+<div id="eventos" class="view">
+  <div class="table-card">
+    <div class="table-head">
+      <div class="table-title">Registro de Eventos</div>
+      <button class="btn btn-ghost btn-sm" onclick="clearEvents()">🗑️ Limpiar</button>
     </div>
+    <div class="ev-log" id="event-log"></div>
   </div>
+</div>
 
 </main>
 
-<!-- MODAL: ONT Detalles -->
-<div id="ont-modal-overlay" class="modal-overlay">
+<!-- ─── MODAL: ONT Detalle ─── -->
+<div id="ont-modal-overlay" class="overlay">
   <div class="modal modal-lg">
     <div class="modal-header">
-      <h2 class="modal-title" id="ont-modal-title">Detalles de ONT</h2>
+      <h2 class="modal-title" id="ont-modal-title">Detalles ONT</h2>
       <button class="btn-close" onclick="closeModal('ont-modal-overlay')">✕</button>
     </div>
-
     <div class="form-row">
-      <div class="form-group">
-        <label>PON / ONT ID</label>
-        <input type="text" id="edit-ont-id" readonly>
-      </div>
-      <div class="form-group">
-        <label>Nombre</label>
-        <input type="text" id="edit-ont-name" placeholder="Nombre de la ONT">
-      </div>
+      <div class="form-group"><label>PON / ONT</label><input id="edit-ont-id" readonly></div>
+      <div class="form-group"><label>Nombre</label><input id="edit-ont-name" placeholder="Nombre de la ONT"></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>MAC / Serial</label>
-        <input type="text" id="edit-ont-serial" readonly>
-      </div>
+      <div class="form-group"><label>MAC / Serial</label><input id="edit-ont-serial" readonly></div>
+      <div class="form-group"><label>Estado</label><input id="edit-ont-status" readonly></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Estado</label>
-        <input type="text" id="edit-ont-status" readonly>
-      </div>
-      <div class="form-group">
-        <label>Uptime</label>
-        <input type="text" id="edit-ont-uptime" readonly>
-      </div>
+      <div class="form-group"><label>Uptime</label><input id="edit-ont-uptime" readonly></div>
     </div>
 
-    <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">Métricas Ópticas</div>
+    <div style="font-size:10px;font-weight:800;color:var(--tx-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Métricas Ópticas</div>
     <div class="optical-grid">
-      <div class="optical-metric">
-        <div class="optical-metric-label">RX Power</div>
-        <div class="optical-metric-value" id="m-rxpower" style="color:var(--primary)">—</div>
-        <div class="optical-metric-unit">dBm</div>
-      </div>
-      <div class="optical-metric">
-        <div class="optical-metric-label">TX Power</div>
-        <div class="optical-metric-value" id="m-txpower" style="color:var(--info)">—</div>
-        <div class="optical-metric-unit">dBm</div>
-      </div>
-      <div class="optical-metric">
-        <div class="optical-metric-label">TX Bias</div>
-        <div class="optical-metric-value" id="m-txbias" style="color:var(--secondary)">—</div>
-        <div class="optical-metric-unit">mA</div>
-      </div>
-      <div class="optical-metric">
-        <div class="optical-metric-label">Temperatura</div>
-        <div class="optical-metric-value" id="m-temp" style="color:var(--warning)">—</div>
-        <div class="optical-metric-unit">°C</div>
-      </div>
-      <div class="optical-metric">
-        <div class="optical-metric-label">Voltaje</div>
-        <div class="optical-metric-value" id="m-voltage" style="color:var(--success)">—</div>
-        <div class="optical-metric-unit">V</div>
-      </div>
+      <div class="opt-metric"><div class="opt-lbl">RX Power</div><div class="opt-val" id="m-rxpower" style="color:var(--green)">—</div><div class="opt-unit">dBm</div></div>
+      <div class="opt-metric"><div class="opt-lbl">TX Power</div><div class="opt-val" id="m-txpower" style="color:var(--blue)">—</div><div class="opt-unit">dBm</div></div>
+      <div class="opt-metric"><div class="opt-lbl">TX Bias</div><div class="opt-val" id="m-txbias" style="color:var(--purple)">—</div><div class="opt-unit">mA</div></div>
+      <div class="opt-metric"><div class="opt-lbl">Temp</div><div class="opt-val" id="m-temp" style="color:var(--amber)">—</div><div class="opt-unit">°C</div></div>
+      <div class="opt-metric"><div class="opt-lbl">Voltaje</div><div class="opt-val" id="m-voltage" style="color:var(--green)">—</div><div class="opt-unit">V</div></div>
     </div>
 
-    <div class="history-section">
-      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">Historial de Monitoreo de Potencia</div>
-      <div class="history-chart-wrap"><canvas id="history-chart"></canvas></div>
-      <div id="history-empty" style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;display:none">No hay historial disponible aún. Se registra con cada escaneo.</div>
-    </div>
+    <div style="font-size:10px;font-weight:800;color:var(--tx-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Historial de Potencia</div>
+    <div class="hist-wrap"><canvas id="history-chart"></canvas></div>
+    <div id="history-empty" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--tx-muted)">Sin historial disponible. Se registra en cada escaneo.</div>
 
-    <div class="form-row" style="margin-top:16px">
-      <div class="form-group">
-        <label>Primer Online</label>
-        <input type="text" id="edit-ont-first-online" readonly>
-      </div>
-      <div class="form-group">
-        <label>Último Online</label>
-        <input type="text" id="edit-ont-last-online" readonly>
-      </div>
+    <div class="form-row" style="margin-top:14px">
+      <div class="form-group"><label>Primer Online</label><input id="edit-ont-first-online" readonly></div>
+      <div class="form-group"><label>Último Online</label><input id="edit-ont-last-online" readonly></div>
     </div>
-    <div class="form-group">
-      <label>Último Offline</label>
-      <input type="text" id="edit-ont-last-offline" readonly>
-    </div>
+    <div class="form-group"><label>Último Offline</label><input id="edit-ont-last-offline" readonly></div>
 
     <div class="form-actions">
-      <button class="btn btn-primary btn-sm" id="btn-save-name" onclick="saveOntName()">💾 Guardar Nombre</button>
-      <button class="btn btn-warning btn-sm" onclick="refreshOntOptical()">🔄 Actualizar Potencia</button>
-      <button class="btn btn-info btn-sm" onclick="restartOnt()">🔄 Reiniciar ONT</button>
-      <button class="btn btn-success btn-sm" onclick="activateOnt()">▶️ Activar</button>
-      <button class="btn btn-danger btn-sm" onclick="deactivateOnt()">⏹️ Desactivar</button>
-      <button class="btn btn-warning btn-sm" onclick="cleanUopFlag()">🧹 Limpiar Flag</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('ont-modal-overlay')">Cerrar</button>
+      <button class="btn btn-green btn-sm" id="btn-save-name" onclick="saveOntName()">💾 Guardar</button>
+      <button class="btn btn-amber btn-sm" onclick="refreshOntOptical()">🔄 Potencia</button>
+      <button class="btn btn-blue btn-sm" onclick="restartOnt()">↺ Reiniciar</button>
+      <button class="btn btn-green btn-sm" onclick="activateOnt()">▶ Activar</button>
+      <button class="btn btn-red btn-sm" onclick="deactivateOnt()">■ Desactivar</button>
+      <button class="btn btn-amber btn-sm" onclick="cleanUopFlag()">🧹 Flag</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('ont-modal-overlay')">Cerrar</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL: Agregar / Editar OLT -->
-<div id="olt-modal-overlay" class="modal-overlay">
+<!-- ─── MODAL: OLT ─── -->
+<div id="olt-modal-overlay" class="overlay">
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title" id="olt-modal-title">Agregar OLT</h2>
       <button class="btn-close" onclick="closeModal('olt-modal-overlay')">✕</button>
     </div>
     <input type="hidden" id="olt-id">
-    <div class="form-group">
-      <label>Nombre</label>
-      <input type="text" id="olt-name" placeholder="Ej: OLT Genova 1">
+    <div class="form-group"><label>Nombre</label><input id="olt-name" placeholder="Ej: OLT Genova 1"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Host / IP</label><input id="olt-host" placeholder="10.250.41.211"></div>
+      <div class="form-group"><label>Puerto Telnet</label><input type="number" id="olt-port" value="23"></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Host / IP</label>
-        <input type="text" id="olt-host" placeholder="10.250.41.211">
-      </div>
-      <div class="form-group">
-        <label>Puerto Telnet</label>
-        <input type="number" id="olt-port" value="23" placeholder="23">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Usuario</label>
-        <input type="text" id="olt-user" placeholder="admin">
-      </div>
-      <div class="form-group">
-        <label>Contraseña</label>
-        <input type="password" id="olt-password" placeholder="••••••••">
-      </div>
+      <div class="form-group"><label>Usuario</label><input id="olt-user" placeholder="admin"></div>
+      <div class="form-group"><label>Contraseña</label><input type="password" id="olt-password"></div>
     </div>
     <div class="form-actions">
-      <button class="btn btn-primary" onclick="saveOLT()">💾 Guardar</button>
-      <button class="btn btn-secondary" onclick="closeModal('olt-modal-overlay')">Cancelar</button>
+      <button class="btn btn-green" onclick="saveOLT()">💾 Guardar</button>
+      <button class="btn btn-ghost" onclick="closeModal('olt-modal-overlay')">Cancelar</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL: Autorizar ONT -->
-<div id="auth-modal-overlay" class="modal-overlay">
+<!-- ─── MODAL: Autorizar ONT ─── -->
+<div id="auth-modal-overlay" class="overlay">
   <div class="modal">
     <div class="modal-header">
-      <h2 class="modal-title">Autorizar ONT — whitelist add</h2>
+      <h2 class="modal-title">Autorizar ONT</h2>
       <button class="btn-close" onclick="closeModal('auth-modal-overlay')">✕</button>
     </div>
-    <div class="form-group">
-      <label>MAC Address</label>
-      <input type="text" id="auth-mac" placeholder="AA:BB:CC:DD:EE:FF" style="font-family:monospace;font-size:15px;font-weight:700">
-    </div>
+    <div class="form-group"><label>MAC Address</label><input id="auth-mac" placeholder="AA:BB:CC:DD:EE:FF" style="font-family:var(--font-mono);font-size:15px;font-weight:700"></div>
     <div class="form-group">
       <label>Puerto PON</label>
       <input type="number" id="auth-pon" placeholder="1" min="1" max="16">
-      <small style="color:var(--text-muted);font-size:11px">El comando se ejecutará dentro de: interface epon 0/&lt;PON&gt;</small>
+      <div style="font-size:11px;color:var(--tx-muted);margin-top:4px">Comando dentro de: interface epon 0/&lt;PON&gt;</div>
     </div>
-    <div id="auth-output-box" style="display:none;margin-top:8px;background:var(--bg);border-radius:8px;padding:10px;font-family:monospace;font-size:11px;max-height:120px;overflow:auto;color:var(--text)"></div>
+    <div id="auth-output-box" style="display:none;margin-top:8px;background:var(--bg);border-radius:8px;padding:10px;font-family:var(--font-mono);font-size:11px;max-height:120px;overflow:auto;color:var(--tx)"></div>
     <div class="form-actions">
-      <button class="btn btn-purple" onclick="authorizeOnt()">✅ Autorizar (whitelist add)</button>
-      <button class="btn btn-secondary" onclick="closeModal('auth-modal-overlay')">Cancelar</button>
+      <button class="btn btn-purple" onclick="authorizeOnt()">✅ Autorizar</button>
+      <button class="btn btn-ghost" onclick="closeModal('auth-modal-overlay')">Cancelar</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL: PON Detalle -->
-<div id="pon-modal-overlay" class="modal-overlay">
+<!-- ─── MODAL: PON Detalle ─── -->
+<div id="pon-modal-overlay" class="overlay">
   <div class="modal modal-lg">
     <div class="modal-header">
       <h2 class="modal-title" id="pon-modal-title">PON Detalle</h2>
       <button class="btn-close" onclick="closeModal('pon-modal-overlay')">✕</button>
     </div>
-    <div class="charts-grid" style="margin-bottom:16px">
-      <div class="chart-card">
-        <div class="chart-title">Potencia RX por ONT</div>
-        <div class="chart-wrap"><canvas id="pon-chart-power"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Estado de ONTs en este PON</div>
-        <div class="chart-wrap"><canvas id="pon-chart-status"></canvas></div>
-      </div>
+    <div class="charts-grid" style="margin-bottom:14px">
+      <div class="chart-card"><div class="chart-card-title">Potencia RX por ONT</div><div class="chart-wrap"><canvas id="pon-chart-power"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-title">Estado ONTs</div><div class="chart-wrap"><canvas id="pon-chart-status"></canvas></div></div>
     </div>
-    <div style="overflow-x:auto">
+    <div class="tbl-wrap">
       <table>
-        <thead>
-          <tr><th>ONT</th><th>MAC</th><th>Estado</th><th>RX dBm</th><th>TX dBm</th><th>Temp °C</th><th>Acciones</th></tr>
-        </thead>
+        <thead><tr><th>ONT</th><th>MAC</th><th>Estado</th><th>RX dBm</th><th>TX dBm</th><th>Temp</th><th></th></tr></thead>
         <tbody id="pon-modal-table"></tbody>
       </table>
     </div>
-    <div class="form-actions">
-      <button class="btn btn-secondary" onclick="closeModal('pon-modal-overlay')">Cerrar</button>
-    </div>
+    <div class="form-actions"><button class="btn btn-ghost" onclick="closeModal('pon-modal-overlay')">Cerrar</button></div>
   </div>
 </div>
 
 <script>
-let olts = [];
-let currentOltId = null;
-let currentData = null;
-let currentOntsData = [];
-let wsConn = null;
-let charts = {};
-let currentOntForModal = null;
-let historyChart = null;
-let ponChartPower = null, ponChartStatus = null;
+/* ─── STATE ─── */
+let olts=[],currentOltId=null,currentData=null,currentOntsData=[],wsConn=null,charts={};
+let currentOntForModal=null,historyChart=null,ponChartPower=null,ponChartStatus=null;
 
-  const btnTop = document.getElementById("btnTop");
+/* ─── SCROLL ─── */
+const btnTop=document.getElementById('btnTop');
+window.addEventListener('scroll',()=>{btnTop.style.display=window.scrollY>250?'flex':'none'});
+function scrollToTop(){window.scrollTo({top:0,behavior:'smooth'})}
 
-window.addEventListener("scroll", () => {
-
-    if (window.scrollY > 300) {
-
-        btnTop.style.display = "flex";
-        btnTop.style.alignItems = "center";
-        btnTop.style.justifyContent = "center";
-
-    } else {
-
-        btnTop.style.display = "none";
-
-    }
-
-});
-
-function scrollToTop(){
-
-    window.scrollTo({
-
-        top:0,
-
-        behavior:"smooth"
-
-    });
-
+/* ─── SYNC STATUS DOTS (desktop + mobile) ─── */
+function setScanDot(scanning){
+  ['scan-dot','scan-dot2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('scanning',scanning);
+  });
+}
+function setScanLabel(txt){
+  ['scan-label','scan-label2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=txt;
+  });
 }
 
-function connectWS() {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    wsConn = new WebSocket(`${proto}://${location.host}/ws`);
-    wsConn.onopen = () => {
-        document.getElementById('scan-dot').classList.remove('scanning');
-        document.getElementById('scan-label').textContent = 'Conectado';
-    };
-    wsConn.onclose = () => {
-        document.getElementById('scan-label').textContent = 'Reconectando...';
-        setTimeout(connectWS, 3000);
-    };
-    wsConn.onmessage = (e) => {
-        try { const msg = JSON.parse(e.data); handleWSMessage(msg); } catch {}
-    };
+/* ─── WS ─── */
+function connectWS(){
+  const proto=location.protocol==='https:'?'wss':'ws';
+  wsConn=new WebSocket(`${proto}://${location.host}/ws`);
+  wsConn.onopen=()=>{setScanDot(false);setScanLabel('Conectado')};
+  wsConn.onclose=()=>{setScanLabel('Reconectando…');setTimeout(connectWS,3000)};
+  wsConn.onmessage=(e)=>{try{handleWSMessage(JSON.parse(e.data))}catch{}};
+}
+function handleWSMessage({type,data}){
+  if(type==='scan_started'){setScanDot(true);setScanLabel('Escaneando…');addEvent('info',`Escaneo iniciado: ${data.oltName||data.oltId}`);}
+  else if(type==='scan_completed'){setScanDot(false);setScanLabel('Actualizado');addEvent('success',`Scan OK: ${data.data?.totalOnts||0} ONTs`);if(data.oltId===currentOltId)processData(data.data);}
+  else if(type==='scan_error'){setScanDot(false);setScanLabel('Error');addEvent('error',`Error: ${data.error}`);}
+  else if(type==='onu_restarted')addEvent('info',`ONT ${data.pon}/${data.ont} reiniciada`);
+  else if(type==='onu_deactivated')addEvent('warning',`ONT ${data.pon}/${data.ont} desactivada`);
+  else if(type==='ont_authorized')addEvent('success',`ONT ${data.mac} autorizada PON ${data.pon}`);
+  else if(type==='optical_refresh_started'){if(data.oltId===currentOltId){setScanDot(true);setScanLabel(`Pot. 0/${data.total}…`);showNotif(`Actualizando ${data.total} ONTs…`,'info');}addEvent('info',`Refresco potencia OLT ${data.oltId}: ${data.total}`);}
+  else if(type==='optical_refresh_progress'){if(data.oltId===currentOltId)setScanLabel(`Pot. ${data.done}/${data.total}…`);}
+  else if(type==='optical_refresh_completed'){const btn=document.getElementById('btn-refresh-optical');if(btn)btn.disabled=false;if(data.oltId===currentOltId){setScanDot(false);setScanLabel(`Pot. OK ${new Date().toLocaleTimeString()}`);showNotif(`Potencia: ${data.updated}/${data.total}`,'success');if(data.data)processData(data.data);}addEvent('success',`Potencia OK OLT ${data.oltId}: ${data.updated}/${data.total}`);}
+  else if(type==='optical_refresh_error'){const btn=document.getElementById('btn-refresh-optical');if(btn)btn.disabled=false;setScanDot(false);setScanLabel('Error');showNotif('Error potencia: '+data.error,'error');addEvent('error',`Error pot. OLT ${data.oltId}: ${data.error}`);}
 }
 
-function handleWSMessage(msg) {
-    const { type, data } = msg;
-    if (type === 'scan_started') {
-        document.getElementById('scan-dot').classList.add('scanning');
-        document.getElementById('scan-label').textContent = 'Escaneando...';
-        addEvent('info', `Escaneo iniciado para OLT ${data.oltName || data.oltId}`);
-    } else if (type === 'scan_completed') {
-        document.getElementById('scan-dot').classList.remove('scanning');
-        document.getElementById('scan-label').textContent = 'Actualizado';
-        addEvent('success', `Escaneo completado: ${data.data?.totalOnts || 0} ONTs`);
-        if (data.oltId === currentOltId) processData(data.data);
-    } else if (type === 'scan_error') {
-        document.getElementById('scan-dot').classList.remove('scanning');
-        document.getElementById('scan-label').textContent = 'Error';
-        addEvent('error', `Error de escaneo: ${data.error}`);
-    } else if (type === 'onu_restarted') {
-        addEvent('info', `ONT ${data.pon}/${data.ont} reiniciada`);
-    } else if (type === 'onu_deactivated') {
-        addEvent('warning', `ONT ${data.pon}/${data.ont} desactivada`);
-    } else if (type === 'ont_authorized') {
-        addEvent('success', `ONT ${data.mac} autorizada en PON ${data.pon}`);
-    } else if (type === 'optical_refresh_started') {
-        if (data.oltId === currentOltId) {
-            document.getElementById('scan-dot').classList.add('scanning');
-            document.getElementById('scan-label').textContent = `Actualizando potencia 0/${data.total}...`;
-            showNotification(`Actualizando potencia de ${data.total} ONTs Online...`, 'info');
-        }
-        addEvent('info', `Refresco de potencia iniciado OLT ${data.oltId}: ${data.total} ONTs`);
-    } else if (type === 'optical_refresh_progress') {
-        if (data.oltId === currentOltId) {
-            document.getElementById('scan-label').textContent = `Actualizando potencia ${data.done}/${data.total}...`;
-        }
-    } else if (type === 'optical_refresh_completed') {
-        const btn = document.getElementById('btn-refresh-optical');
-        if (btn) btn.disabled = false;
-        if (data.oltId === currentOltId) {
-            document.getElementById('scan-dot').classList.remove('scanning');
-            document.getElementById('scan-label').textContent = `Potencia actualizada ${new Date().toLocaleTimeString()}`;
-            showNotification(`Potencia actualizada: ${data.updated}/${data.total} ONTs`, 'success');
-            if (data.data) processData(data.data);
-        }
-        addEvent('success', `Potencia óptica actualizada OLT ${data.oltId}: ${data.updated}/${data.total}`);
-    } else if (type === 'optical_refresh_error') {
-        const btn = document.getElementById('btn-refresh-optical');
-        if (btn) btn.disabled = false;
-        document.getElementById('scan-dot').classList.remove('scanning');
-        document.getElementById('scan-label').textContent = 'Error';
-        showNotification('Error actualizando potencia: ' + data.error, 'error');
-        addEvent('error', `Error refrescando potencia OLT ${data.oltId}: ${data.error}`);
-    }
+/* ─── INIT ─── */
+async function init(){loadTheme();connectWS();await loadOLTs();}
+
+async function loadOLTs(){
+  try{const r=await fetch('/api/olts');const d=await r.json();olts=d.olts||[];renderOLTSelector();if(olts.length>0){currentOltId=olts[0].id;document.getElementById('olt-select').value=currentOltId;loadData();}}
+  catch(e){showNotif('Error al cargar OLTs','error');}
+}
+function renderOLTSelector(){
+  const sel=document.getElementById('olt-select');
+  sel.innerHTML=olts.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
+}
+function switchOLT(){currentOltId=parseInt(document.getElementById('olt-select').value);currentData=null;currentOntsData=[];loadData();}
+
+async function loadData(){
+  if(!currentOltId)return;
+  showNotif('Cargando…','info');setScanDot(true);setScanLabel('Cargando…');
+  try{
+    const r=await fetch(`/api/onts/${currentOltId}`);const d=await r.json();
+    if(d.scanning){setScanLabel('Escaneando OLT…');if(d.pons&&d.pons.length>0){processData(d);showNotif('Actualizando en segundo plano…','info');}else showLoadingState();}
+    else processData(d);
+  }catch(e){setScanDot(false);setScanLabel('Error');showNotif('Error cargando ONTs','error');}
+}
+function showLoadingState(){
+  document.getElementById('val-total').textContent='—';
+  document.getElementById('val-online').textContent='—';
+  document.getElementById('val-offline').textContent='—';
+  document.getElementById('val-critical').textContent='—';
+  document.getElementById('val-temp').textContent='—';
+  document.getElementById('val-disconnected').textContent='—';
+  const spin=`<div class="loader"><div class="spinner"></div><div class="loader-text">Escaneando OLT… <span id="load-cd">20</span>s</div></div>`;
+  const pc=document.getElementById('pons-container');if(pc)pc.innerHTML=spin;
+  const tb=document.getElementById('ont-table-body');if(tb)tb.innerHTML=`<tr><td colspan="10" class="empty-row">${spin}</td></tr>`;
+  let s=20;const iv=setInterval(()=>{s--;const el=document.getElementById('load-cd');if(el)el.textContent=s;if(s<=0)clearInterval(iv);},1000);
+}
+function processData(data){
+  if(!data||!data.pons)return;
+  currentData=data;currentOntsData=[];
+  data.pons.forEach(pon=>(pon.onts||[]).forEach(ont=>currentOntsData.push(ont)));
+  updateKPIs(data);updateCharts(data);renderPons(data);renderTable();renderOffline();renderDisconnected(data);updatePonFilter();
+  setScanDot(false);setScanLabel(`✓ ${new Date().toLocaleTimeString()}`);
+}
+function updateKPIs(data){
+  const pct=n=>data.totalOnts>0?((n/data.totalOnts)*100).toFixed(1)+'%':'0%';
+  setKPI('val-total',data.totalOnts,`${data.pons.filter(p=>p.count>0).length} PONs activos`);
+  setKPI('val-online',data.totalWorking,pct(data.totalWorking)+' del total');
+  const offline=data.totalOffline??(data.totalOnts-data.totalWorking);
+  setKPI('val-offline',offline,pct(offline));
+  setKPI('val-critical',data.totalCritical??0,'señal débil');
+  setKPI('val-temp',data.avgTemperature!=null?data.avgTemperature+'°C':'—','promedio');
+  const disc=(data.disconnectedOnts||[]).length;
+  setKPI('val-disconnected',disc,disc>0?'atención!':'ninguna');
+  document.getElementById('badge-disconnected').textContent=disc;
+}
+function setKPI(id,val,sub){
+  const el=document.getElementById(id);const se=document.getElementById(id+'-sub');
+  if(el)el.textContent=val;if(se)se.textContent=sub||'';
 }
 
-async function init() {
-    loadTheme();
-    connectWS();
-    await loadOLTs();
+/* ─── CHARTS ─── */
+function destroyChart(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
+function chartDefaults(){
+  return{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11},color:getComputedStyle(document.body).getPropertyValue('--tx').trim()||'#0f172a'}}},scales:{x:{ticks:{color:'#64748b'}},y:{ticks:{color:'#64748b'}}}};
+}
+function updateCharts(data){
+  const pons=data.pons.filter(p=>p.count>0);
+  destroyChart('status');
+  charts['status']=new Chart(document.getElementById('chart-status'),{type:'doughnut',data:{labels:['Online','Offline','Crítica'],datasets:[{data:[data.totalWorking,data.totalOnts-data.totalWorking,data.totalCritical||0],backgroundColor:['#00c07f','#f03e3e','#f59e0b'],borderColor:['#009f6a','#dc2626','#d97706'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+  document.getElementById('chart-status-sub').textContent=`${data.totalWorking}/${data.totalOnts}`;
+
+  destroyChart('pons');
+  charts['pons']=new Chart(document.getElementById('chart-pons'),{type:'bar',data:{labels:pons.map(p=>`P${p.pon}`),datasets:[{label:'Online',data:pons.map(p=>p.online),backgroundColor:'#00c07f',borderRadius:3},{label:'Offline',data:pons.map(p=>p.count-p.online),backgroundColor:'#f03e3e',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{color:'#64748b'}},y:{stacked:true,beginAtZero:true,ticks:{color:'#64748b'}}},plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+
+  destroyChart('power-dist');
+  const powers=currentOntsData.filter(o=>o.rxPower!==null).map(o=>o.rxPower);
+  const bins=[{l:'<-35',min:-99,max:-35,c:'#7f1d1d'},{l:'-35/-30',min:-35,max:-30,c:'#ef4444'},{l:'-30/-28',min:-30,max:-28,c:'#f97316'},{l:'-28/-25',min:-28,max:-25,c:'#f59e0b'},{l:'-25/-20',min:-25,max:-20,c:'#84cc16'},{l:'-20/-15',min:-20,max:-15,c:'#10b981'},{l:'>-15',min:-15,max:0,c:'#059669'}];
+  charts['power-dist']=new Chart(document.getElementById('chart-power-dist'),{type:'bar',data:{labels:bins.map(b=>b.l),datasets:[{label:'ONTs',data:bins.map(b=>powers.filter(p=>p>=b.min&&p<b.max).length),backgroundColor:bins.map(b=>b.c),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{color:'#64748b',stepSize:1}},x:{ticks:{color:'#64748b'}}},plugins:{legend:{display:false}}}});
+
+  destroyChart('power-pon');
+  const pp=pons.filter(p=>p.avgPower!==null);
+  charts['power-pon']=new Chart(document.getElementById('chart-power-pon'),{type:'bar',data:{labels:pp.map(p=>`P${p.pon}`),datasets:[{label:'dBm',data:pp.map(p=>p.avgPower),backgroundColor:pp.map(p=>p.avgPower<-28?'#f03e3e':p.avgPower<-25?'#f59e0b':'#00c07f'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:false,ticks:{color:'#64748b'}},x:{ticks:{color:'#64748b'}}},plugins:{legend:{display:false}}}});
+
+  destroyChart('temp');
+  const pt=pons.filter(p=>p.avgTemp!==null);
+  charts['temp']=new Chart(document.getElementById('chart-temp'),{type:'line',data:{labels:pt.map(p=>`P${p.pon}`),datasets:[{label:'°C',data:pt.map(p=>p.avgTemp),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#f59e0b'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{ticks:{color:'#64748b'}},x:{ticks:{color:'#64748b'}}},plugins:{legend:{display:false}}}});
+
+  destroyChart('health');
+  charts['health']=new Chart(document.getElementById('chart-health'),{type:'radar',data:{labels:pons.map(p=>`P${p.pon}`),datasets:[{label:'Salud %',data:pons.map(p=>p.count>0?Math.round((p.online/p.count)*100):0),borderColor:'#00c07f',backgroundColor:'rgba(0,192,127,.15)',pointBackgroundColor:'#00c07f',pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{stepSize:25,color:'#64748b'},grid:{color:'rgba(0,0,0,.08)'}}},plugins:{legend:{display:false}}}});
 }
 
-async function loadOLTs() {
-    try {
-        const r = await fetch('/api/olts');
-        const d = await r.json();
-        olts = d.olts || [];
-        renderOLTSelector();
-        if (olts.length > 0) {
-            currentOltId = olts[0].id;
-            document.getElementById('olt-select').value = currentOltId;
-            loadData();
-        }
-    } catch (e) {
-        showNotification('Error al cargar OLTs', 'error');
-    }
-}
-
-function renderOLTSelector() {
-    const sel = document.getElementById('olt-select');
-    sel.innerHTML = olts.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
-}
-
-function switchOLT() {
-    currentOltId = parseInt(document.getElementById('olt-select').value);
-    currentData = null;
-    currentOntsData = [];
-    loadData();
-}
-
-async function loadData() {
-    if (!currentOltId) return;
-    showNotification('Cargando datos...', 'info');
-    document.getElementById('scan-dot').classList.add('scanning');
-    document.getElementById('scan-label').textContent = 'Cargando...';
-    try {
-        const r = await fetch(`/api/onts/${currentOltId}`);
-        const d = await r.json();
-        if (d.scanning) {
-            document.getElementById('scan-label').textContent = 'Escaneando OLT...';
-            if (d.pons && d.pons.length > 0) {
-                processData(d);
-                showNotification('Actualizando datos en segundo plano...', 'info');
-            } else {
-                showLoadingState();
-            }
-        } else {
-            processData(d);
-        }
-    } catch (e) {
-        document.getElementById('scan-dot').classList.remove('scanning');
-        document.getElementById('scan-label').textContent = 'Error';
-        showNotification('Error al cargar datos de ONTs', 'error');
-    }
-}
-
-function showLoadingState() {
-    document.getElementById('val-total').textContent = '—';
-    document.getElementById('val-online').textContent = '—';
-    document.getElementById('val-offline').textContent = '—';
-    document.getElementById('val-critical').textContent = '—';
-    document.getElementById('val-temp').textContent = '—';
-    document.getElementById('val-disconnected').textContent = '—';
-
-    const spinner = `<div class="loading">
-        <div class="spinner"></div>
-        <div class="loading-text">Escaneando OLT... <span id="load-countdown">20</span>s</div>
-    </div>`;
-    const ponsContainer = document.getElementById('pons-container');
-    if (ponsContainer) ponsContainer.innerHTML = spinner;
-    const body = document.getElementById('ont-table-body');
-    if (body) body.innerHTML = `<tr><td colspan="10" class="table-empty">${spinner}</td></tr>`;
-
-    let secs = 20;
-    const interval = setInterval(() => {
-        secs--;
-        const el = document.getElementById('load-countdown');
-        if (el) el.textContent = secs;
-        if (secs <= 0) clearInterval(interval);
-    }, 1000);
-}
-
-function processData(data) {
-    if (!data || !data.pons) return;
-    currentData = data;
-    currentOntsData = [];
-    data.pons.forEach(pon => {
-        (pon.onts || []).forEach(ont => currentOntsData.push(ont));
-    });
-    updateKPIs(data);
-    updateCharts(data);
-    renderPons(data);
-    renderTable();
-    renderOffline();
-    renderDisconnected(data);
-    updatePonFilter();
-    document.getElementById('scan-dot').classList.remove('scanning');
-    document.getElementById('scan-label').textContent = `Actualizado ${new Date().toLocaleTimeString()}`;
-}
-
-function updateKPIs(data) {
-    const pct = n => data.totalOnts > 0 ? ((n / data.totalOnts) * 100).toFixed(1) + '%' : '0%';
-    setKPI('val-total', data.totalOnts, `${data.pons.filter(p => p.count > 0).length} PONs activos`);
-    setKPI('val-online', data.totalWorking, pct(data.totalWorking) + ' del total');
-    setKPI('val-offline', data.totalOffline ?? (data.totalOnts - data.totalWorking), pct(data.totalOffline ?? (data.totalOnts - data.totalWorking)));
-    setKPI('val-critical', data.totalCritical ?? 0, 'señal débil');
-    setKPI('val-temp', data.avgTemperature !== null && data.avgTemperature !== undefined ? data.avgTemperature + '°C' : '—', 'temperatura media');
-    const disc = (data.disconnectedOnts || []).length;
-    setKPI('val-disconnected', disc, disc > 0 ? 'requieren atención' : 'ninguna');
-    document.getElementById('badge-disconnected').textContent = disc;
-}
-
-function setKPI(id, val, sub) {
-    const el = document.getElementById(id);
-    const subEl = document.getElementById(id + '-sub');
-    if (el) el.textContent = val;
-    if (subEl) subEl.textContent = sub || '';
-}
-
-function destroyChart(key) {
-    if (charts[key]) { charts[key].destroy(); delete charts[key]; }
-}
-
-function updateCharts(data) {
-    const pons = data.pons.filter(p => p.count > 0);
-
-    destroyChart('status');
-    const online = data.totalWorking;
-    const offline = data.totalOnts - data.totalWorking;
-    const critical = data.totalCritical || 0;
-    charts['status'] = new Chart(document.getElementById('chart-status'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Online', 'Offline', 'Potencia Crítica'],
-            datasets: [{ data: [online, offline, critical],
-                backgroundColor: ['#10b981','#ef4444','#f59e0b'],
-                borderColor: ['#059669','#dc2626','#d97706'], borderWidth: 2 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
-    });
-    document.getElementById('chart-status-sub').textContent = `${online}/${data.totalOnts}`;
-
-    destroyChart('pons');
-    charts['pons'] = new Chart(document.getElementById('chart-pons'), {
-        type: 'bar',
-        data: {
-            labels: pons.map(p => `PON ${p.pon}`),
-            datasets: [
-                { label: 'Online', data: pons.map(p => p.online), backgroundColor: '#10b981', borderRadius: 4 },
-                { label: 'Offline', data: pons.map(p => p.count - p.online), backgroundColor: '#ef4444', borderRadius: 4 }
-            ]
-        },
-        options: { responsive: true, maintainAspectRatio: false,
-            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
-            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
-    });
-
-    destroyChart('power-dist');
-    const powers = currentOntsData.filter(o => o.rxPower !== null).map(o => o.rxPower);
-    const bins = [
-        { label: '< -35', min: -99, max: -35, color: '#7f1d1d' },
-        { label: '-35 a -30', min: -35, max: -30, color: '#ef4444' },
-        { label: '-30 a -28', min: -30, max: -28, color: '#f97316' },
-        { label: '-28 a -25', min: -28, max: -25, color: '#f59e0b' },
-        { label: '-25 a -20', min: -25, max: -20, color: '#84cc16' },
-        { label: '-20 a -15', min: -20, max: -15, color: '#10b981' },
-        { label: '> -15', min: -15, max: 0, color: '#059669' }
-    ];
-    charts['power-dist'] = new Chart(document.getElementById('chart-power-dist'), {
-        type: 'bar',
-        data: {
-            labels: bins.map(b => b.label),
-            datasets: [{ label: 'ONTs', data: bins.map(b => powers.filter(p => p >= b.min && p < b.max).length),
-                backgroundColor: bins.map(b => b.color), borderRadius: 4 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-            plugins: { legend: { display: false } } }
-    });
-
-    destroyChart('power-pon');
-    const ponPowers = pons.filter(p => p.avgPower !== null);
-    charts['power-pon'] = new Chart(document.getElementById('chart-power-pon'), {
-        type: 'bar',
-        data: {
-            labels: ponPowers.map(p => `PON ${p.pon}`),
-            datasets: [{
-                label: 'Potencia Promedio (dBm)',
-                data: ponPowers.map(p => p.avgPower),
-                backgroundColor: ponPowers.map(p => p.avgPower < -28 ? '#ef4444' : p.avgPower < -25 ? '#f59e0b' : '#10b981'),
-                borderRadius: 4
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false,
-            scales: { y: { beginAtZero: false } },
-            plugins: { legend: { display: false } } }
-    });
-
-    destroyChart('temp');
-    const ponTemps = pons.filter(p => p.avgTemp !== null);
-    charts['temp'] = new Chart(document.getElementById('chart-temp'), {
-        type: 'line',
-        data: {
-            labels: ponTemps.map(p => `PON ${p.pon}`),
-            datasets: [{
-                label: 'Temperatura Promedio (°C)',
-                data: ponTemps.map(p => p.avgTemp),
-                borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
-                tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#f59e0b'
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false,
-            scales: { y: { beginAtZero: false } },
-            plugins: { legend: { display: false } } }
-    });
-
-    destroyChart('health');
-    charts['health'] = new Chart(document.getElementById('chart-health'), {
-        type: 'radar',
-        data: {
-            labels: pons.map(p => `PON ${p.pon}`),
-            datasets: [{
-                label: 'Salud (%)',
-                data: pons.map(p => p.count > 0 ? Math.round((p.online / p.count) * 100) : 0),
-                borderColor: '#00a86b', backgroundColor: 'rgba(0,168,107,0.15)',
-                pointBackgroundColor: '#00a86b', pointRadius: 4
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false,
-            scales: { r: { min: 0, max: 100, ticks: { stepSize: 25 } } },
-            plugins: { legend: { display: false } } }
-    });
-}
-
-function renderPons(data) {
-    const container = document.getElementById('pons-container');
-    const activePons = data.pons.filter(p => p.count > 0);
-    document.getElementById('pons-sub').textContent = `${activePons.length} puertos activos · ${data.totalOnts} ONTs total`;
-
-    if (activePons.length === 0) {
-        container.innerHTML = '<div class="loading"><div class="loading-text">No se encontraron PONs activos</div></div>';
-        return;
-    }
-
-    container.innerHTML = activePons.map(pon => {
-        const healthPct = pon.count > 0 ? Math.round((pon.online / pon.count) * 100) : 0;
-        const powerColor = pon.avgPower === null ? '#d1d5db' : pon.avgPower < -28 ? '#ef4444' : pon.avgPower < -25 ? '#f59e0b' : '#10b981';
-        const tempStr = pon.avgTemp !== null ? `${pon.avgTemp}°C` : '—';
-        const tempClass = pon.avgTemp === null ? '' : pon.avgTemp > 70 ? 'temp-hot' : pon.avgTemp > 55 ? 'temp-warm' : 'temp-normal';
-        return `
-        <div class="pon-card" onclick="showPonModal(${pon.pon})">
-          <div class="pon-header">
-            <div class="pon-title">🔌 PON ${pon.pon}</div>
-            <span class="badge ${healthPct >= 80 ? 'badge-online' : healthPct >= 50 ? 'badge-warning' : 'badge-offline'}">${healthPct}% salud</span>
-          </div>
-          <div class="pon-stats">
-            <div class="pon-stat">
-              <div class="pon-stat-label">Total ONTs</div>
-              <div class="pon-stat-value">${pon.count}</div>
-            </div>
-            <div class="pon-stat">
-              <div class="pon-stat-label">Online</div>
-              <div class="pon-stat-value" style="color:var(--success)">${pon.online}</div>
-            </div>
-            <div class="pon-stat">
-              <div class="pon-stat-label">Offline</div>
-              <div class="pon-stat-value" style="color:var(--danger)">${pon.count - pon.online}</div>
-            </div>
-            <div class="pon-stat">
-              <div class="pon-stat-label">Potencia Crítica</div>
-              <div class="pon-stat-value" style="color:var(--warning)">${pon.criticalOnts || 0}</div>
-            </div>
-          </div>
-          <div style="font-size:12px;margin-bottom:6px;display:flex;justify-content:space-between">
-            <span>Potencia Prom: <strong style="color:${powerColor}">${pon.avgPower !== null ? pon.avgPower + ' dBm' : 'N/A'}</strong></span>
-            <span>Temp: <strong class="${tempClass}">${tempStr}</strong></span>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
-            Min: ${pon.minPower !== null ? pon.minPower + ' dBm' : '—'} &nbsp;|&nbsp; Max: ${pon.maxPower !== null ? pon.maxPower + ' dBm' : '—'}
-          </div>
-          <div class="pon-power-bar">
-            <div class="pon-power-fill" style="width:${healthPct}%;background:${powerColor}"></div>
-          </div>
-          <div class="pon-actions">
-            <button class="btn btn-primary btn-xs" onclick="event.stopPropagation();filterByPon(${pon.pon})">📋 Ver ONTs</button>
-            <button class="btn btn-info btn-xs" onclick="event.stopPropagation();showPonModal(${pon.pon})">📊 Gráficas</button>
-          </div>
-        </div>`;
-    }).join('');
-}
-
-function updatePonFilter() {
-    const sel = document.getElementById('filter-pon');
-    const pons = [...new Set(currentOntsData.map(o => o.pon))].sort((a,b)=>a-b);
-    sel.innerHTML = '<option value="">Todos los PON</option>' + pons.map(p => `<option value="${p}">PON ${p}</option>`).join('');
-}
-
-function renderTable() {
-    const body = document.getElementById('ont-table-body');
-    const search = (document.getElementById('table-search').value || '').toLowerCase();
-    const filterStatus = document.getElementById('filter-status').value;
-    const filterPon = document.getElementById('filter-pon').value;
-
-    let filtered = currentOntsData.filter(ont => {
-        const mac = (ont.macAddress || ont.serial || '').toLowerCase();
-        const matchSearch = !search || mac.includes(search) || String(ont.pon).includes(search) || String(ont.ont).includes(search);
-        const matchStatus = !filterStatus ||
-            (filterStatus === 'working' && ont.status === 'working') ||
-            (filterStatus === 'offline' && ont.status === 'offline') ||
-            (filterStatus === 'critical' && ont.rxPower !== null && ont.rxPower < -28);
-        const matchPon = !filterPon || String(ont.pon) === filterPon;
-        return matchSearch && matchStatus && matchPon;
-    });
-
-    document.getElementById('table-count').textContent = filtered.length;
-
-    if (filtered.length === 0) {
-        body.innerHTML = `<tr><td colspan="9" class="table-empty">No se encontraron ONTs</td></tr>`;
-        return;
-    }
-
-    body.innerHTML = filtered.map(ont => {
-        const mac = ont.macAddress || ont.serial || 'N/A';
-        const name = ont.name || '—';
-        const statusBadge = ont.status === 'working'
-            ? '<span class="badge badge-online">Online</span>'
-            : '<span class="badge badge-offline">Offline</span>';
-        const rxStr = ont.rxPower !== null ? ont.rxPower.toFixed(2) : null;
-        const rxColor = ont.rxPower === null ? 'var(--text-muted)' : ont.rxPower < -28 ? 'var(--danger)' : ont.rxPower < -25 ? 'var(--warning)' : 'var(--success)';
-        const txStr = ont.txPower !== null ? ont.txPower.toFixed(2) : '—';
-        const tempStr = ont.temperature !== null ? ont.temperature.toFixed(1) : '—';
-        const tempColor = ont.temperature === null ? 'var(--text-muted)' : ont.temperature > 70 ? 'var(--danger)' : ont.temperature > 55 ? 'var(--warning)' : 'var(--success)';
-        const voltStr = ont.voltage !== null ? ont.voltage.toFixed(2) : '—';
-        const uptime = ont.uptime || '—';
-        return `
-        <tr>
-          <td><strong>${ont.pon}/${ont.ont}</strong></td>
-          <td style="font-weight:600;color:var(--info)">${name}</td>
-          <td style="font-family:monospace;font-size:12px">${mac}</td>
-          <td>${statusBadge}</td>
-          <td>
-            <div class="power-indicator">
-              <div class="power-dot ${ont.rxPower === null ? 'power-null' : ont.rxPower < -28 ? 'power-critical' : ont.rxPower < -25 ? 'power-warn' : 'power-good'}"></div>
-              <span class="power-value" style="color:${rxColor}">${rxStr !== null ? rxStr + ' dBm' : 'N/A'}</span>
-            </div>
-          </td>
-          <td style="color:var(--info);font-weight:600">${txStr !== '—' ? txStr + ' dBm' : txStr}</td>
-          <td><span class="temp-indicator" style="color:${tempColor}">${tempStr !== '—' ? tempStr + ' °C' : tempStr}</span></td>
-          <td style="color:var(--text-muted)">${voltStr !== '—' ? voltStr + ' V' : voltStr}</td>
-          <td style="font-size:11px;color:var(--text-muted)">${uptime}</td>
-          <td>
-            <button class="btn btn-primary btn-xs" onclick="showOntModal(${ont.pon},${ont.ont})">⚙️ Detalle</button>
-          </td>
-        </tr>`;
-    }).join('');
-}
-
-function tiempoTranscurrido(fechaStr) {
-    if (!fechaStr || fechaStr === '0000-00-00 00:00:00') return null;
-    const fecha = new Date(fechaStr.replace(' ', 'T'));
-    if (isNaN(fecha)) return null;
-    const diff = Date.now() - fecha.getTime();
-    const mins  = Math.floor(diff / 60000);
-    const horas = Math.floor(diff / 3600000);
-    const dias  = Math.floor(diff / 86400000);
-    if (dias >= 1)  return { texto: `${dias}d ${Math.floor((diff % 86400000) / 3600000)}h`, dias };
-    if (horas >= 1) return { texto: `${horas}h ${Math.floor((diff % 3600000) / 60000)}m`, dias: 0 };
-    return { texto: `${mins}m`, dias: 0 };
-}
-
-function renderOffline() {
-    const offline = currentOntsData.filter(o => o.status === 'offline');
-    document.getElementById('badge-offline').textContent = offline.length;
-    document.getElementById('offline-sub').textContent =
-        `${offline.length} ONT${offline.length !== 1 ? 's' : ''} sin señal actualmente`;
-
-    const body = document.getElementById('offline-table-body');
-    if (offline.length === 0) {
-        body.innerHTML = `<tr><td colspan="6" class="table-empty">✅ No hay ONTs offline</td></tr>`;
-        return;
-    }
-
-    body.innerHTML = offline.map(ont => {
-        const mac = ont.macAddress || ont.serial || 'N/A';
-        const tc = tiempoTranscurrido(ont.lastOnlineTime);
-        const tiempoCaido = tc ? tc.texto : '—';
-        const colorTiempo = !tc ? 'var(--text-muted)' : tc.dias < 2 ? 'var(--danger)' : 'var(--text-muted)';
-        const badgeTiempo = !tc ? '' : tc.dias < 2
-            ? `<span class="badge badge-offline" style="margin-left:6px">Reciente</span>`
-            : `<span class="badge" style="background:rgba(107,114,128,0.15);color:#6b7280;margin-left:6px">Antigua</span>`;
-        return `<tr>
-          <td><strong>${ont.pon}/${ont.ont}</strong></td>
-          <td style="font-family:monospace;font-size:12px">${mac}</td>
-          <td style="font-size:12px">${ont.distance || '—'}</td>
-          <td style="font-size:12px;color:var(--text-muted)">${ont.lastOnlineTime || '—'}</td>
-          <td style="font-weight:700;color:${colorTiempo}">${tiempoCaido}${badgeTiempo}</td>
-          <td>
-            <button class="btn btn-info btn-xs" onclick="showOntModal(${ont.pon},${ont.ont})">⚙️ Detalle</button>
-            <button class="btn btn-warning btn-xs" onclick="restartOntDirect(${ont.pon},${ont.ont})">🔄</button>
-          </td>
-        </tr>`;
-    }).join('');
-}
-
-function renderDisconnected(data) {
-    const container = document.getElementById('disconnected-container');
-    const todas = currentOntsData.filter(o =>
-        o.status === 'offline' && o.lastOnlineTime && o.lastOnlineTime !== '0000-00-00 00:00:00'
-    );
-    const recientes = todas.filter(o => { const tc = tiempoTranscurrido(o.lastOnlineTime); return tc && tc.dias < 2; });
-    const antiguas  = todas.filter(o => { const tc = tiempoTranscurrido(o.lastOnlineTime); return !tc || tc.dias >= 2; });
-    document.getElementById('badge-disconnected').textContent = recientes.length;
-
-    if (todas.length === 0) {
-        container.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text-muted)">
-            <div style="font-size:48px">✅</div>
-            <div style="margin-top:12px;font-size:15px;font-weight:600">No hay ONTs desenganchadas</div>
-            <div style="font-size:13px;margin-top:6px">Todas las ONTs con historial están operativas</div>
-        </div>`;
-        return;
-    }
-
-    const cardOnt = (ont, esReciente) => {
-        const mac = ont.macAddress || ont.serial || 'N/A';
-        const tc = tiempoTranscurrido(ont.lastOnlineTime);
-        const tiempoCaido = tc ? tc.texto : '—';
-        const borderColor = esReciente ? 'rgba(239,68,68,0.5)' : 'rgba(107,114,128,0.25)';
-        const titleColor  = esReciente ? 'var(--danger)' : 'var(--text-muted)';
-        const icon        = esReciente ? '🔴' : '⚫';
-        return `
-        <div class="disconnected-card" style="border-color:${borderColor}">
-          <div class="disconnected-title" style="color:${titleColor}">${icon} PON ${ont.pon} / ONT ${ont.ont}</div>
-          <div class="disconnected-info">📡 MAC: <strong style="font-family:monospace">${mac}</strong></div>
-          <div class="disconnected-info">📅 Último Online: <strong>${ont.lastOnlineTime}</strong></div>
-          <div class="disconnected-info">⏱️ Caída hace: <strong style="color:${titleColor}">${tiempoCaido}</strong></div>
-          ${ont.distance ? `<div class="disconnected-info">📏 Distancia: <strong>${ont.distance}</strong></div>` : ''}
-          <div style="margin-top:10px;display:flex;gap:6px">
-            <button class="btn btn-info btn-xs" onclick="showOntModal(${ont.pon},${ont.ont})">⚙️ Detalle</button>
-            <button class="btn btn-warning btn-xs" onclick="restartOntDirect(${ont.pon},${ont.ont})">🔄 Reiniciar</button>
-          </div>
-        </div>`;
-    };
-
-    let html = '';
-    if (recientes.length > 0) {
-        html += `
-        <div class="alert-banner">🔴 ${recientes.length} ONT${recientes.length > 1 ? 's' : ''} desenganchada${recientes.length > 1 ? 's' : ''} recientemente (últimas 48h)</div>
-        <div class="disconnected-grid" style="margin-bottom:28px">
-            ${recientes.map(o => cardOnt(o, true)).join('')}
-        </div>`;
-    }
-    if (antiguas.length > 0) {
-        html += `
-        <div style="margin:16px 0 10px;font-size:13px;font-weight:700;color:var(--text-muted);display:flex;align-items:center;gap:8px">
-            <span>⚫ Desconectadas hace más de 48h</span>
-            <span style="background:rgba(107,114,128,0.15);color:#6b7280;padding:2px 8px;border-radius:6px;font-size:11px">${antiguas.length}</span>
-        </div>
-        <div class="disconnected-grid">
-            ${antiguas.map(o => cardOnt(o, false)).join('')}
-        </div>`;
-    }
-    container.innerHTML = html;
-}
-
-async function loadUnauthOnts() {
-    if (!currentOltId) { showNotification('Seleccione una OLT primero', 'warning'); return; }
-    const container = document.getElementById('unauth-container');
-    container.innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">Buscando ONTs no autorizadas via autofind EPON... (puede tardar ~25s)</div></div>';
-    try {
-        const r = await fetch(`/api/unauth/${currentOltId}`);
-        const d = await r.json();
-        if (d.error) showNotification('Error al escanear: ' + d.error, 'warning');
-        renderUnauthOnts(d.unauth || [], d.rawOutput || '');
-    } catch (e) {
-        container.innerHTML = `<div class="loading"><div class="loading-text">Error al buscar ONTs no autorizadas: ${e.message}</div></div>`;
-    }
-}
-
-function renderUnauthOnts(list, rawOutput) {
-    const container = document.getElementById('unauth-container');
-    document.getElementById('badge-unauth').textContent = list.length;
-
-    const rawSection = rawOutput ? `
-        <details style="margin-top:16px">
-          <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:600">🔎 Ver salida raw del autofind (útil para debug)</summary>
-          <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:8px;overflow:auto;margin-top:8px;max-height:300px;color:var(--text)">${rawOutput.replace(/</g,'&lt;')}</pre>
-        </details>` : '';
-
-    if (list.length === 0) {
-        container.innerHTML = `
-        <div style="text-align:center;padding:40px;color:var(--text-muted)">
-          <div style="font-size:48px">🔐</div>
-          <div style="margin-top:12px;font-size:15px;font-weight:600">No hay ONTs no autorizadas detectadas</div>
-          <div style="font-size:13px;margin-top:6px">Si hay ONTs conectadas sin autorizar, deberían aparecer en el raw abajo</div>
-        </div>
-        <div style="margin-top:16px">
-          <button class="btn btn-purple" onclick="showAuthModal()">➕ Autorizar ONT Manualmente</button>
-        </div>
-        ${rawSection}`;
-        return;
-    }
-
-    container.innerHTML = `
-    <div class="alert-banner">🔐 ${list.length} ONT${list.length > 1 ? 's' : ''} pendiente${list.length > 1 ? 's' : ''} de autorización</div>
-    ${list.map(u => `
-    <div class="unauth-card" data-mac="${u.mac}">
-      <div class="unauth-info">
-        <div class="unauth-mac">${u.mac}</div>
-        <div class="unauth-meta">PON ${u.pon != null ? u.pon : '?'} · ONT ${u.ont != null ? u.ont : '?'} · Detectada: ${u.detectedAt ? new Date(u.detectedAt).toLocaleString() : 'Desconocido'}</div>
+/* ─── PONs ─── */
+function renderPons(data){
+  const c=document.getElementById('pons-container');
+  const active=data.pons.filter(p=>p.count>0);
+  document.getElementById('pons-sub').textContent=`${active.length} activos · ${data.totalOnts} ONTs`;
+  if(!active.length){c.innerHTML='<div class="loader"><div class="loader-text">Sin PONs activos</div></div>';return;}
+  c.innerHTML=active.map(pon=>{
+    const h=pon.count>0?Math.round((pon.online/pon.count)*100):0;
+    const pc=pon.avgPower===null?'#94a3b8':pon.avgPower<-28?'var(--red)':pon.avgPower<-25?'var(--amber)':'var(--green)';
+    const tc=pon.avgTemp===null?'':pon.avgTemp>70?'color:var(--red)':pon.avgTemp>55?'color:var(--amber)':'color:var(--green)';
+    const hBadge=h>=80?'b-online':h>=50?'b-warn':'b-offline';
+    return `<div class="pon-card" onclick="showPonModal(${pon.pon})">
+      <div class="pon-head">
+        <div class="pon-name">PON ${pon.pon}</div>
+        <span class="badge ${hBadge}">${h}% salud</span>
       </div>
-      <button class="btn btn-purple btn-sm" onclick="showAuthModal('${u.mac}','${u.pon || ''}')">✅ Autorizar</button>
-    </div>`).join('')}
-    <div style="margin-top:16px">
-      <button class="btn btn-purple btn-sm" onclick="showAuthModal()">➕ Autorizar ONT Manualmente</button>
-    </div>
-    ${rawSection}`;
+      <div class="pon-stats">
+        <div class="ps"><div class="ps-l">Total</div><div class="ps-v">${pon.count}</div></div>
+        <div class="ps"><div class="ps-l">Online</div><div class="ps-v" style="color:var(--green)">${pon.online}</div></div>
+        <div class="ps"><div class="ps-l">Offline</div><div class="ps-v" style="color:var(--red)">${pon.count-pon.online}</div></div>
+        <div class="ps"><div class="ps-l">Crítica</div><div class="ps-v" style="color:var(--amber)">${pon.criticalOnts||0}</div></div>
+      </div>
+      <div class="pon-footer">
+        <span>Pot. Prom: <strong style="color:${pc}">${pon.avgPower!==null?pon.avgPower+' dBm':'N/A'}</strong></span>
+        <span style="${tc}">Temp: ${pon.avgTemp!==null?pon.avgTemp+'°C':'—'}</span>
+      </div>
+      <div class="pon-bar"><div class="pon-bar-fill" style="width:${h}%;background:${pc}"></div></div>
+      <div class="pon-actions">
+        <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();filterByPon(${pon.pon})">📋 ONTs</button>
+        <button class="btn btn-blue btn-xs" onclick="event.stopPropagation();showPonModal(${pon.pon})">📊 Gráficas</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function showAuthModal(mac = '', pon = '') {
-    document.getElementById('auth-mac').value = mac;
-    document.getElementById('auth-pon').value = pon;
-    document.getElementById('auth-output-box').style.display = 'none';
-    document.getElementById('auth-output-box').textContent = '';
-    openModal('auth-modal-overlay');
+/* ─── TABLE ─── */
+function updatePonFilter(){
+  const sel=document.getElementById('filter-pon');
+  const pons=[...new Set(currentOntsData.map(o=>o.pon))].sort((a,b)=>a-b);
+  sel.innerHTML='<option value="">Todos PON</option>'+pons.map(p=>`<option value="${p}">PON ${p}</option>`).join('');
+}
+function renderTable(){
+  const body=document.getElementById('ont-table-body');
+  const search=(document.getElementById('table-search').value||'').toLowerCase();
+  const fs=document.getElementById('filter-status').value;
+  const fp=document.getElementById('filter-pon').value;
+  let filtered=currentOntsData.filter(o=>{
+    const mac=(o.macAddress||o.serial||'').toLowerCase();
+    const ms=!search||mac.includes(search)||String(o.pon).includes(search)||String(o.ont).includes(search);
+    const ss=!fs||(fs==='working'&&o.status==='working')||(fs==='offline'&&o.status==='offline')||(fs==='critical'&&o.rxPower!==null&&o.rxPower<-28);
+    const ps=!fp||String(o.pon)===fp;
+    return ms&&ss&&ps;
+  });
+  document.getElementById('table-count').textContent=filtered.length;
+  if(!filtered.length){body.innerHTML=`<tr><td colspan="10" class="empty-row">Sin ONTs</td></tr>`;return;}
+  body.innerHTML=filtered.map(o=>{
+    const mac=o.macAddress||o.serial||'N/A';
+    const sb=o.status==='working'?'<span class="badge b-online">Online</span>':'<span class="badge b-offline">Offline</span>';
+    const rxC=o.rxPower===null?'#94a3b8':o.rxPower<-28?'var(--red)':o.rxPower<-25?'var(--amber)':'var(--green)';
+    const rxD=o.rxPower===null?'power-null':o.rxPower<-28?'pw-bad':o.rxPower<-25?'pw-warn':'pw-good';
+    const tC=o.temperature===null?'var(--tx-muted)':o.temperature>70?'var(--red)':o.temperature>55?'var(--amber)':'var(--green)';
+    return `<tr>
+      <td><strong>${o.pon}/${o.ont}</strong></td>
+      <td style="font-weight:700;color:var(--blue)">${o.name||'—'}</td>
+      <td style="font-family:var(--font-mono);font-size:11px">${mac}</td>
+      <td>${sb}</td>
+      <td><div class="pwr"><div class="pwr-dot ${rxD}"></div><span class="pwr-val" style="color:${rxC}">${o.rxPower!==null?o.rxPower.toFixed(2)+' dBm':'N/A'}</span></div></td>
+      <td style="color:var(--blue);font-weight:700;font-size:12px;font-family:var(--font-mono)">${o.txPower!==null?o.txPower.toFixed(2)+' dBm':'—'}</td>
+      <td style="font-weight:700;color:${tC};font-size:12px">${o.temperature!==null?o.temperature.toFixed(1)+'°C':'—'}</td>
+      <td style="font-size:12px;color:var(--tx-muted)">${o.voltage!==null?o.voltage.toFixed(2)+'V':'—'}</td>
+      <td style="font-size:11px;color:var(--tx-muted)">${o.uptime||'—'}</td>
+      <td><button class="btn btn-green btn-xs" onclick="showOntModal(${o.pon},${o.ont})">⚙️</button></td>
+    </tr>`;
+  }).join('');
 }
 
-async function authorizeOnt() {
-    const mac = document.getElementById('auth-mac').value.trim();
-    const pon = document.getElementById('auth-pon').value.trim();
-    if (!mac || !pon) { showNotification('MAC y PON son obligatorios', 'error'); return; }
-    const outputBox = document.getElementById('auth-output-box');
-    outputBox.style.display = 'block';
-    outputBox.textContent = 'Enviando whitelist add al OLT...';
-    try {
-        const r = await fetch(`/api/unauth/${currentOltId}/authorize`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mac, pon: parseInt(pon) })
-        });
-        const d = await r.json();
-        outputBox.textContent = d.output || d.message || '';
-        if (d.success) {
-            showNotification(d.message, 'success');
-            const card = document.querySelector(`.unauth-card[data-mac="${mac.toUpperCase()}"]`);
-            if (card) card.remove();
-            const badge = document.getElementById('badge-unauth');
-            if (badge) badge.textContent = Math.max(0, parseInt(badge.textContent || '0') - 1);
-            setTimeout(() => closeModal('auth-modal-overlay'), 2000);
-        } else {
-            showNotification(d.message || 'Error al autorizar', 'error');
-        }
-    } catch (e) {
-        outputBox.textContent = 'Error de conexión: ' + e.message;
-        showNotification('Error al autorizar ONT', 'error');
-    }
+/* ─── OFFLINE ─── */
+function tiempoTranscurrido(f){
+  if(!f||f==='0000-00-00 00:00:00')return null;
+  const d=new Date(f.replace(' ','T'));if(isNaN(d))return null;
+  const diff=Date.now()-d.getTime();
+  const m=Math.floor(diff/60000),h=Math.floor(diff/3600000),dd=Math.floor(diff/86400000);
+  if(dd>=1)return{texto:`${dd}d ${Math.floor((diff%86400000)/3600000)}h`,dias:dd};
+  if(h>=1)return{texto:`${h}h ${Math.floor((diff%3600000)/60000)}m`,dias:0};
+  return{texto:`${m}m`,dias:0};
+}
+function renderOffline(){
+  const offline=currentOntsData.filter(o=>o.status==='offline');
+  document.getElementById('badge-offline').textContent=offline.length;
+  document.getElementById('offline-sub').textContent=`${offline.length} ONT${offline.length!==1?'s':''} sin señal`;
+  const body=document.getElementById('offline-table-body');
+  if(!offline.length){body.innerHTML=`<tr><td colspan="6" class="empty-row">✅ Sin ONTs offline</td></tr>`;return;}
+  body.innerHTML=offline.map(o=>{
+    const mac=o.macAddress||o.serial||'N/A';
+    const tc=tiempoTranscurrido(o.lastOnlineTime);
+    const tc_txt=tc?tc.texto:'—';
+    const tc_c=!tc?'var(--tx-muted)':tc.dias<2?'var(--red)':'var(--tx-muted)';
+    return `<tr>
+      <td><strong>${o.pon}/${o.ont}</strong></td>
+      <td style="font-family:var(--font-mono);font-size:11px">${mac}</td>
+      <td style="font-size:12px">${o.distance||'—'}</td>
+      <td style="font-size:12px;color:var(--tx-muted)">${o.lastOnlineTime||'—'}</td>
+      <td style="font-weight:700;color:${tc_c}">${tc_txt}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-blue btn-xs" onclick="showOntModal(${o.pon},${o.ont})">⚙️</button>
+        <button class="btn btn-amber btn-xs" onclick="restartOntDirect(${o.pon},${o.ont})">↺</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
-async function showOntModal(pon, ont) {
-    const ontData = currentOntsData.find(o => o.pon === pon && o.ont === ont);
-    if (!ontData) return;
-    currentOntForModal = ontData;
-    const mac = ontData.macAddress || ontData.serial || 'N/A';
-    const name = ontData.name || '';
-    document.getElementById('ont-modal-title').textContent = `ONT ${pon}/${ont} — ${mac}`;
-    document.getElementById('edit-ont-id').value = `${pon}/${ont}`;
-    document.getElementById('edit-ont-name').value = name;
-    document.getElementById('edit-ont-serial').value = mac;
-    document.getElementById('edit-ont-status').value = ontData.status === 'working' ? 'Online ✅' : 'Offline ❌';
-    document.getElementById('edit-ont-uptime').value = ontData.uptime || '—';
-    document.getElementById('edit-ont-first-online').value = ontData.firstOnlineTime || '—';
-    document.getElementById('edit-ont-last-online').value = ontData.lastOnlineTime || '—';
-    document.getElementById('edit-ont-last-offline').value = ontData.lastOfflineTime || '—';
-    setOpticalMetric('m-rxpower', ontData.rxPower, 'dBm', v => v < -28 ? '#ef4444' : v < -25 ? '#f59e0b' : '#10b981');
-    setOpticalMetric('m-txpower', ontData.txPower, 'dBm', () => 'var(--info)');
-    setOpticalMetric('m-txbias', ontData.txBias, 'mA', () => 'var(--secondary)');
-    setOpticalMetric('m-temp', ontData.temperature, '°C', v => v > 70 ? '#ef4444' : v > 55 ? '#f59e0b' : '#10b981');
-    setOpticalMetric('m-voltage', ontData.voltage, 'V', () => 'var(--success)');
-    openModal('ont-modal-overlay');
-    await loadOntHistory(pon, ont);
+/* ─── DISCONNECTED ─── */
+function renderDisconnected(data){
+  const c=document.getElementById('disconnected-container');
+  const todas=currentOntsData.filter(o=>o.status==='offline'&&o.lastOnlineTime&&o.lastOnlineTime!=='0000-00-00 00:00:00');
+  const recientes=todas.filter(o=>{const tc=tiempoTranscurrido(o.lastOnlineTime);return tc&&tc.dias<2;});
+  const antiguas=todas.filter(o=>{const tc=tiempoTranscurrido(o.lastOnlineTime);return!tc||tc.dias>=2;});
+  document.getElementById('badge-disconnected').textContent=recientes.length;
+  if(!todas.length){c.innerHTML=`<div class="loader"><div style="font-size:40px">✅</div><div class="loader-text" style="margin-top:10px">Sin ONTs desenganchadas</div></div>`;return;}
+  const card=(o,esR)=>{
+    const mac=o.macAddress||o.serial||'N/A';
+    const tc=tiempoTranscurrido(o.lastOnlineTime);
+    const tct=tc?tc.texto:'—';
+    return `<div class="disc-card ${esR?'':'old'}">
+      <div class="disc-title ${esR?'':'old'}">${esR?'🔴':'⚫'} PON ${o.pon} / ONT ${o.ont}</div>
+      <div class="disc-row">MAC: <strong>${mac}</strong></div>
+      <div class="disc-row">Último online: <strong>${o.lastOnlineTime}</strong></div>
+      <div class="disc-row">Caído hace: <strong style="color:${esR?'var(--red)':'var(--tx-muted)'}">${tct}</strong></div>
+      ${o.distance?`<div class="disc-row">Dist: <strong>${o.distance}</strong></div>`:''}
+      <div class="disc-actions">
+        <button class="btn btn-blue btn-xs" onclick="showOntModal(${o.pon},${o.ont})">⚙️</button>
+        <button class="btn btn-amber btn-xs" onclick="restartOntDirect(${o.pon},${o.ont})">↺ Reiniciar</button>
+      </div>
+    </div>`;
+  };
+  let html='';
+  if(recientes.length)html+=`<div class="alert-bar">🔴 ${recientes.length} desenganchada${recientes.length>1?'s':''} en últimas 48h</div><div class="disc-grid" style="margin-bottom:20px">${recientes.map(o=>card(o,true)).join('')}</div>`;
+  if(antiguas.length)html+=`<div style="font-size:12px;font-weight:700;color:var(--tx-muted);margin:12px 0 8px">⚫ Más de 48h desconectadas (${antiguas.length})</div><div class="disc-grid">${antiguas.map(o=>card(o,false)).join('')}</div>`;
+  c.innerHTML=html;
 }
 
-function setOpticalMetric(id, val, unit, colorFn) {
-    const el = document.getElementById(id);
-    if (val !== null && val !== undefined) {
-        el.textContent = typeof val === 'number' ? val.toFixed(2) : val;
-        el.style.color = colorFn(val);
-    } else {
-        el.textContent = '—';
-        el.style.color = 'var(--text-muted)';
-    }
+/* ─── UNAUTH ─── */
+async function loadUnauthOnts(){
+  if(!currentOltId){showNotif('Seleccione una OLT','warning');return;}
+  const c=document.getElementById('unauth-container');
+  c.innerHTML='<div class="loader"><div class="spinner"></div><div class="loader-text">Buscando vía autofind (~25s)…</div></div>';
+  try{const r=await fetch(`/api/unauth/${currentOltId}`);const d=await r.json();if(d.error)showNotif('Error: '+d.error,'warning');renderUnauthOnts(d.unauth||[],d.rawOutput||'');}
+  catch(e){c.innerHTML=`<div class="loader"><div class="loader-text">Error: ${e.message}</div></div>`;}
+}
+function renderUnauthOnts(list,rawOutput){
+  const c=document.getElementById('unauth-container');
+  document.getElementById('badge-unauth').textContent=list.length;
+  const raw=rawOutput?`<details style="margin-top:14px"><summary style="cursor:pointer;font-size:12px;color:var(--tx-muted);font-weight:700">🔎 Ver salida raw</summary><pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:8px;overflow:auto;margin-top:8px;max-height:260px;color:var(--tx)">${rawOutput.replace(/</g,'&lt;')}</pre></details>`:'';
+  if(!list.length){c.innerHTML=`<div class="loader"><div style="font-size:40px">🔐</div><div class="loader-text" style="margin-top:10px">Sin ONTs no autorizadas</div></div><div style="margin-top:14px"><button class="btn btn-purple btn-sm" onclick="showAuthModal()">➕ Autorizar manual</button></div>${raw}`;return;}
+  c.innerHTML=`<div class="alert-bar">🔐 ${list.length} pendiente${list.length>1?'s':''} de autorización</div>
+  ${list.map(u=>`<div class="unauth-card" data-mac="${u.mac}">
+    <div><div class="ua-mac">${u.mac}</div><div class="ua-meta">PON ${u.pon??'?'} · ONT ${u.ont??'?'} · ${u.detectedAt?new Date(u.detectedAt).toLocaleString():'Desconocido'}</div></div>
+    <button class="btn btn-purple btn-sm" onclick="showAuthModal('${u.mac}','${u.pon||''}')">✅ Autorizar</button>
+  </div>`).join('')}
+  <div style="margin-top:14px"><button class="btn btn-purple btn-sm" onclick="showAuthModal()">➕ Autorizar manual</button></div>
+  ${raw}`;
+}
+function showAuthModal(mac='',pon=''){
+  document.getElementById('auth-mac').value=mac;
+  document.getElementById('auth-pon').value=pon;
+  const ob=document.getElementById('auth-output-box');ob.style.display='none';ob.textContent='';
+  openModal('auth-modal-overlay');
+}
+async function authorizeOnt(){
+  const mac=document.getElementById('auth-mac').value.trim();
+  const pon=document.getElementById('auth-pon').value.trim();
+  if(!mac||!pon){showNotif('MAC y PON requeridos','error');return;}
+  const ob=document.getElementById('auth-output-box');ob.style.display='block';ob.textContent='Enviando whitelist add…';
+  try{
+    const r=await fetch(`/api/unauth/${currentOltId}/authorize`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac,pon:parseInt(pon)})});
+    const d=await r.json();ob.textContent=d.output||d.message||'';
+    if(d.success){showNotif(d.message,'success');const card=document.querySelector(`.unauth-card[data-mac="${mac.toUpperCase()}"]`);if(card)card.remove();const b=document.getElementById('badge-unauth');if(b)b.textContent=Math.max(0,parseInt(b.textContent||'0')-1);setTimeout(()=>closeModal('auth-modal-overlay'),2000);}
+    else showNotif(d.message||'Error al autorizar','error');
+  }catch(e){ob.textContent='Error: '+e.message;showNotif('Error al autorizar','error');}
 }
 
-async function loadOntHistory(pon, ont) {
-    if (!currentOltId) return;
-    try {
-        const r = await fetch(`/api/history/${currentOltId}/${pon}/${ont}`);
-        const d = await r.json();
-        const hist = d.history || [];
-        const empty = document.getElementById('history-empty');
-        const wrap = document.querySelector('.history-chart-wrap');
-        if (hist.length === 0) {
-            empty.style.display = 'block'; wrap.style.display = 'none'; return;
-        }
-        empty.style.display = 'none'; wrap.style.display = 'block';
-        if (historyChart) historyChart.destroy();
-        historyChart = new Chart(document.getElementById('history-chart'), {
-            type: 'line',
-            data: {
-                labels: hist.map(h => new Date(h.ts).toLocaleTimeString()),
-                datasets: [
-                    { label: 'RX Power (dBm)', data: hist.map(h => h.rx ?? h.rxPower), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.4, fill: true, pointRadius: 2 },
-                    { label: 'TX Power (dBm)', data: hist.map(h => h.txPower), borderColor: '#3b82f6', backgroundColor: 'transparent', tension: 0.4, pointRadius: 2 },
-                    { label: 'Temp (°C)', data: hist.map(h => h.temperature), borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4, pointRadius: 2, yAxisID: 'y2' }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    y: { title: { display: true, text: 'dBm' } },
-                    y2: { position: 'right', title: { display: true, text: '°C' }, grid: { drawOnChartArea: false } }
-                },
-                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }
-            }
-        });
-    } catch (e) {}
+/* ─── ONT MODAL ─── */
+async function showOntModal(pon,ont){
+  const o=currentOntsData.find(x=>x.pon===pon&&x.ont===ont);if(!o)return;
+  currentOntForModal=o;const mac=o.macAddress||o.serial||'N/A';
+  document.getElementById('ont-modal-title').textContent=`ONT ${pon}/${ont} — ${mac}`;
+  document.getElementById('edit-ont-id').value=`${pon}/${ont}`;
+  document.getElementById('edit-ont-name').value=o.name||'';
+  document.getElementById('edit-ont-serial').value=mac;
+  document.getElementById('edit-ont-status').value=o.status==='working'?'Online ✅':'Offline ❌';
+  document.getElementById('edit-ont-uptime').value=o.uptime||'—';
+  document.getElementById('edit-ont-first-online').value=o.firstOnlineTime||'—';
+  document.getElementById('edit-ont-last-online').value=o.lastOnlineTime||'—';
+  document.getElementById('edit-ont-last-offline').value=o.lastOfflineTime||'—';
+  setOptM('m-rxpower',o.rxPower,'dBm',v=>v<-28?'var(--red)':v<-25?'var(--amber)':'var(--green)');
+  setOptM('m-txpower',o.txPower,'dBm',()=>'var(--blue)');
+  setOptM('m-txbias',o.txBias,'mA',()=>'var(--purple)');
+  setOptM('m-temp',o.temperature,'°C',v=>v>70?'var(--red)':v>55?'var(--amber)':'var(--green)');
+  setOptM('m-voltage',o.voltage,'V',()=>'var(--green)');
+  openModal('ont-modal-overlay');
+  await loadOntHistory(pon,ont);
+}
+function setOptM(id,val,unit,colorFn){
+  const el=document.getElementById(id);
+  if(val!==null&&val!==undefined){el.textContent=typeof val==='number'?val.toFixed(2):val;el.style.color=colorFn(val);}
+  else{el.textContent='—';el.style.color='var(--tx-muted)';}
+}
+async function loadOntHistory(pon,ont){
+  if(!currentOltId)return;
+  try{
+    const r=await fetch(`/api/history/${currentOltId}/${pon}/${ont}`);const d=await r.json();
+    const hist=d.history||[];
+    const empty=document.getElementById('history-empty');const wrap=document.querySelector('.hist-wrap');
+    if(!hist.length){empty.style.display='block';wrap.style.display='none';return;}
+    empty.style.display='none';wrap.style.display='block';
+    if(historyChart)historyChart.destroy();
+    historyChart=new Chart(document.getElementById('history-chart'),{type:'line',data:{labels:hist.map(h=>new Date(h.ts).toLocaleTimeString()),datasets:[{label:'RX (dBm)',data:hist.map(h=>h.rx??h.rxPower),borderColor:'#00c07f',backgroundColor:'rgba(0,192,127,.1)',tension:.4,fill:true,pointRadius:2},{label:'TX (dBm)',data:hist.map(h=>h.txPower),borderColor:'#3b82f6',backgroundColor:'transparent',tension:.4,pointRadius:2},{label:'Temp (°C)',data:hist.map(h=>h.temperature),borderColor:'#f59e0b',backgroundColor:'transparent',tension:.4,pointRadius:2,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{title:{display:true,text:'dBm'},ticks:{color:'#64748b'}},y2:{position:'right',title:{display:true,text:'°C'},grid:{drawOnChartArea:false},ticks:{color:'#64748b'}},x:{ticks:{color:'#64748b'}}},plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}});
+  }catch{}
+}
+async function refreshOntOptical(){
+  if(!currentOntForModal||!currentOltId)return;
+  const{pon,ont}=currentOntForModal;showNotif('Consultando OLT…','info');
+  try{
+    const r=await fetch(`/api/optical/${currentOltId}/${pon}/${ont}`);const d=await r.json();
+    if(d.success){
+      Object.assign(currentOntForModal,{rxPower:d.rxPower,txPower:d.txPower,txBias:d.txBias,temperature:d.temperature,voltage:d.voltage});
+      setOptM('m-rxpower',d.rxPower,'dBm',v=>v<-28?'var(--red)':v<-25?'var(--amber)':'var(--green)');
+      setOptM('m-txpower',d.txPower,'dBm',()=>'var(--blue)');
+      setOptM('m-txbias',d.txBias,'mA',()=>'var(--purple)');
+      setOptM('m-temp',d.temperature,'°C',v=>v>70?'var(--red)':v>55?'var(--amber)':'var(--green)');
+      setOptM('m-voltage',d.voltage,'V',()=>'var(--green)');
+      if(d.onlineStatus)document.getElementById('edit-ont-status').value=/up/i.test(d.onlineStatus)?'Online ✅':`Offline ❌ (${d.onlineStatus})`;
+      if(d.name&&d.name!=='NA'){document.getElementById('edit-ont-name').value=d.name;currentOntForModal.name=d.name;}
+      if(d.firstUpTime)document.getElementById('edit-ont-first-online').value=d.firstUpTime;
+      if(d.lastUpTime)document.getElementById('edit-ont-last-online').value=d.lastUpTime;
+      if(d.lastOffTime)document.getElementById('edit-ont-last-offline').value=d.lastOffTime;
+      showNotif('Datos actualizados','success');
+    }else showNotif('Error: '+d.message,'error');
+  }catch{showNotif('Error al consultar OLT','error');}
 }
 
-async function refreshOntOptical() {
-    if (!currentOntForModal || !currentOltId) return;
-    const { pon, ont } = currentOntForModal;
-    showNotification('Consultando OLT...', 'info');
-    try {
-        const r = await fetch(`/api/optical/${currentOltId}/${pon}/${ont}`);
-        const d = await r.json();
-        if (d.success) {
-            // Actualizar métricas ópticas
-            currentOntForModal.rxPower = d.rxPower;
-            currentOntForModal.txPower = d.txPower;
-            currentOntForModal.txBias = d.txBias;
-            currentOntForModal.temperature = d.temperature;
-            currentOntForModal.voltage = d.voltage;
-            setOpticalMetric('m-rxpower', d.rxPower, 'dBm', v => v < -28 ? '#ef4444' : v < -25 ? '#f59e0b' : '#10b981');
-            setOpticalMetric('m-txpower', d.txPower, 'dBm', () => 'var(--info)');
-            setOpticalMetric('m-txbias', d.txBias, 'mA', () => 'var(--secondary)');
-            setOpticalMetric('m-temp', d.temperature, '°C', v => v > 70 ? '#ef4444' : v > 55 ? '#f59e0b' : '#10b981');
-            setOpticalMetric('m-voltage', d.voltage, 'V', () => 'var(--success)');
-            // Actualizar campos de estado desde la OLT directamente
-            if (d.onlineStatus) {
-                const isOnline = /up/i.test(d.onlineStatus);
-                document.getElementById('edit-ont-status').value =
-                    isOnline ? 'Online ✅' : `Offline ❌ (OLT: ${d.onlineStatus})`;
-            }
-            if (d.name && d.name !== 'NA') {
-                document.getElementById('edit-ont-name').value = d.name;
-                currentOntForModal.name = d.name;
-            }
-            if (d.firstUpTime) document.getElementById('edit-ont-first-online').value = d.firstUpTime;
-            if (d.lastUpTime)  document.getElementById('edit-ont-last-online').value  = d.lastUpTime;
-            if (d.lastOffTime) document.getElementById('edit-ont-last-offline').value  = d.lastOffTime;
-            showNotification('Datos actualizados desde OLT', 'success');
-        } else {
-            showNotification('Error: ' + d.message, 'error');
-        }
-    } catch (e) {
-        showNotification('Error al consultar OLT', 'error');
-    }
+/* ─── AUTHED ─── */
+async function loadAuthedOnts(){
+  if(!currentOltId){showNotif('Seleccione OLT','warning');return;}
+  const c=document.getElementById('authed-container');
+  c.innerHTML='<div class="loader"><div class="spinner"></div><div class="loader-text">Consultando OLT…</div></div>';
+  try{
+    const r=await fetch(`/api/authed/${currentOltId}`);const d=await r.json();
+    if(!d.success){c.innerHTML=`<div class="loader"><div class="loader-text">Error: ${d.message}</div></div>`;return;}
+    renderAuthedOnts(d.pons);
+  }catch(e){c.innerHTML=`<div class="loader"><div class="loader-text">Error: ${e.message}</div></div>`;}
+}
+function renderAuthedOnts(pons){
+  const c=document.getElementById('authed-container');
+  const nums=Object.keys(pons).sort((a,b)=>parseInt(a)-parseInt(b));
+  if(!nums.length){c.innerHTML='<div class="loader"><div class="loader-text">Sin PONs</div></div>';return;}
+  c.innerHTML=nums.map(pn=>{
+    const{list,total,cached,error}=pons[pn];
+    return `<div class="table-card authed-block">
+      <div class="table-head">
+        <div class="table-title">PON ${pn} — ${total} autorizadas${cached?' <span style="font-size:10px;color:var(--amber)">(caché)</span>':''}${error?' <span style="font-size:10px;color:var(--red)">Error</span>':''}</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>#</th><th>MAC</th><th>ONU ID</th><th>Estado</th></tr></thead>
+          <tbody>${!list.length?'<tr><td colspan="4" class="empty-row">Sin ONTs autorizadas</td></tr>':list.map((o,i)=>`<tr>
+            <td style="color:var(--tx-muted)">${i+1}</td>
+            <td style="font-family:var(--font-mono);font-weight:700">${o.mac}</td>
+            <td style="color:var(--blue)">${o.onuId||'—'}</td>
+            <td>${o.status?`<span class="badge ${/up/i.test(o.status)?'b-online':'b-offline'}">${o.status}</span>`:'—'}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-// ── Cargar ONTs autorizadas por PON ───────────────────────────────────────
-async function loadAuthedOnts() {
-    if (!currentOltId) { showNotification('Seleccione una OLT primero', 'warning'); return; }
-    const container = document.getElementById('authed-container');
-    container.innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">Consultando OLT... esto puede tomar unos segundos</div></div>';
-    try {
-        const r = await fetch(`/api/authed/${currentOltId}`);
-        const d = await r.json();
-        if (!d.success) { container.innerHTML = `<div class="loading"><div class="loading-text">Error: ${d.message}</div></div>`; return; }
-        renderAuthedOnts(d.pons);
-    } catch(e) {
-        container.innerHTML = `<div class="loading"><div class="loading-text">Error: ${e.message}</div></div>`;
-    }
+/* ─── PON MODAL ─── */
+function showPonModal(ponId){
+  if(!currentData)return;
+  const pon=currentData.pons.find(p=>p.pon===ponId);if(!pon)return;
+  document.getElementById('pon-modal-title').textContent=`PON ${ponId} — ${pon.count} ONTs`;
+  if(ponChartPower)ponChartPower.destroy();
+  const wp=(pon.onts||[]).filter(o=>o.rxPower!==null);
+  ponChartPower=new Chart(document.getElementById('pon-chart-power'),{type:'bar',data:{labels:wp.map(o=>`${o.ont}`),datasets:[{label:'RX dBm',data:wp.map(o=>o.rxPower),backgroundColor:wp.map(o=>o.rxPower<-28?'#f03e3e':o.rxPower<-25?'#f59e0b':'#00c07f'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:false,ticks:{color:'#64748b'}},x:{ticks:{color:'#64748b'}}},plugins:{legend:{display:false}}}});
+  if(ponChartStatus)ponChartStatus.destroy();
+  ponChartStatus=new Chart(document.getElementById('pon-chart-status'),{type:'doughnut',data:{labels:['Online','Offline'],datasets:[{data:[pon.online,pon.count-pon.online],backgroundColor:['#00c07f','#f03e3e'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  document.getElementById('pon-modal-table').innerHTML=(pon.onts||[]).map(o=>{
+    const mac=o.macAddress||o.serial||'N/A';
+    const rxc=o.rxPower===null?'':o.rxPower<-28?'color:var(--red)':o.rxPower<-25?'color:var(--amber)':'color:var(--green)';
+    return `<tr>
+      <td><strong>${o.ont}</strong></td>
+      <td style="font-family:var(--font-mono);font-size:11px">${mac}</td>
+      <td><span class="badge ${o.status==='working'?'b-online':'b-offline'}">${o.status==='working'?'Online':'Offline'}</span></td>
+      <td style="${rxc};font-weight:700;font-family:var(--font-mono);font-size:12px">${o.rxPower!==null?o.rxPower.toFixed(2)+' dBm':'—'}</td>
+      <td style="font-family:var(--font-mono);font-size:12px">${o.txPower!==null?o.txPower.toFixed(2)+' dBm':'—'}</td>
+      <td style="font-size:12px">${o.temperature!==null?o.temperature.toFixed(1)+'°C':'—'}</td>
+      <td><button class="btn btn-green btn-xs" onclick="showOntModal(${o.pon},${o.ont})">⚙️</button></td>
+    </tr>`;
+  }).join('');
+  openModal('pon-modal-overlay');
 }
 
-function renderAuthedOnts(pons) {
-    const container = document.getElementById('authed-container');
-    const ponNums = Object.keys(pons).sort((a,b) => parseInt(a)-parseInt(b));
-    if (ponNums.length === 0) {
-        container.innerHTML = '<div class="loading"><div class="loading-text">No se encontraron PONs</div></div>';
-        return;
-    }
-    let html = '';
-    for (const ponNum of ponNums) {
-        const { list, total, cached, error } = pons[ponNum];
-        html += `
-        <div class="table-card" style="margin-bottom:16px">
-          <div class="table-header">
-            <div class="table-title">🔌 PON ${ponNum} — ${total} ONTs autorizadas${cached ? ' <span style="font-size:10px;color:var(--warning)">(caché)</span>' : ''}${error ? ' <span style="font-size:10px;color:var(--danger)">Error</span>' : ''}</div>
-          </div>
-          <div style="overflow-x:auto">
-            <table>
-              <thead><tr><th>#</th><th>MAC Address</th><th>ONU ID</th><th>Estado</th></tr></thead>
-              <tbody>
-                ${list.length === 0
-                    ? '<tr><td colspan="4" class="table-empty">Sin ONTs autorizadas en este PON</td></tr>'
-                    : list.map((o, i) => `<tr>
-                        <td style="color:var(--text-muted)">${i+1}</td>
-                        <td style="font-family:monospace;font-weight:700">${o.mac}</td>
-                        <td style="color:var(--info)">${o.onuId || '—'}</td>
-                        <td>${o.status ? `<span class="badge badge-${/up/i.test(o.status)?'online':'offline'}">${o.status}</span>` : '—'}</td>
-                      </tr>`).join('')
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>`;
-    }
-    container.innerHTML = html;
+/* ─── OLT MODAL ─── */
+function showAddOLTModal(){
+  document.getElementById('olt-modal-title').textContent='Agregar OLT';
+  ['olt-id','olt-name','olt-host','olt-user','olt-password'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('olt-port').value='23';
+  openModal('olt-modal-overlay');
+}
+function showEditOLTModal(){
+  const olt=olts.find(o=>o.id===currentOltId);if(!olt){showNotif('Seleccione OLT','warning');return;}
+  document.getElementById('olt-modal-title').textContent='Editar OLT';
+  document.getElementById('olt-id').value=olt.id;
+  document.getElementById('olt-name').value=olt.name;
+  document.getElementById('olt-host').value=olt.host;
+  document.getElementById('olt-port').value=olt.port||23;
+  document.getElementById('olt-user').value=olt.user;
+  document.getElementById('olt-password').value=olt.password;
+  openModal('olt-modal-overlay');
+}
+async function saveOLT(){
+  const id=document.getElementById('olt-id').value;
+  const name=document.getElementById('olt-name').value.trim();
+  const host=document.getElementById('olt-host').value.trim();
+  const user=document.getElementById('olt-user').value.trim();
+  const password=document.getElementById('olt-password').value.trim();
+  if(!name||!host||!user||!password){showNotif('Todos los campos son requeridos','error');return;}
+  try{
+    const isEdit=id&&id!=='';
+    const r=await fetch(isEdit?`/api/olts/${id}`:'/api/olts',{method:isEdit?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,host,user,password})});
+    const d=await r.json();
+    if(d.success){showNotif(isEdit?'OLT actualizada':'OLT agregada','success');closeModal('olt-modal-overlay');await loadOLTs();}
+    else showNotif(d.message||'Error','error');
+  }catch{showNotif('Error de conexión','error');}
 }
 
-function showPonModal(ponId) {
-    if (!currentData) return;
-    const pon = currentData.pons.find(p => p.pon === ponId);
-    if (!pon) return;
-    document.getElementById('pon-modal-title').textContent = `PON ${ponId} — ${pon.count} ONTs`;
-    if (ponChartPower) ponChartPower.destroy();
-    const ontsWithPower = (pon.onts || []).filter(o => o.rxPower !== null);
-    ponChartPower = new Chart(document.getElementById('pon-chart-power'), {
-        type: 'bar',
-        data: {
-            labels: ontsWithPower.map(o => `ONT ${o.ont}`),
-            datasets: [{ label: 'RX Power (dBm)', data: ontsWithPower.map(o => o.rxPower),
-                backgroundColor: ontsWithPower.map(o => o.rxPower < -28 ? '#ef4444' : o.rxPower < -25 ? '#f59e0b' : '#10b981'), borderRadius: 3 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } }, plugins: { legend: { display: false } } }
-    });
-    if (ponChartStatus) ponChartStatus.destroy();
-    ponChartStatus = new Chart(document.getElementById('pon-chart-status'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Online', 'Offline'],
-            datasets: [{ data: [pon.online, pon.count - pon.online], backgroundColor: ['#10b981','#ef4444'], borderWidth: 2 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-    });
-    document.getElementById('pon-modal-table').innerHTML = (pon.onts || []).map(ont => {
-        const mac = ont.macAddress || ont.serial || 'N/A';
-        const rxStr = ont.rxPower !== null ? ont.rxPower.toFixed(2) + ' dBm' : '—';
-        const rxColor = ont.rxPower === null ? '' : ont.rxPower < -28 ? 'color:var(--danger)' : ont.rxPower < -25 ? 'color:var(--warning)' : 'color:var(--success)';
-        return `<tr>
-          <td><strong>${ont.ont}</strong></td>
-          <td style="font-family:monospace;font-size:11px">${mac}</td>
-          <td><span class="badge badge-${ont.status === 'working' ? 'online' : 'offline'}">${ont.status === 'working' ? 'Online' : 'Offline'}</span></td>
-          <td style="${rxColor};font-weight:700">${rxStr}</td>
-          <td>${ont.txPower !== null ? ont.txPower.toFixed(2) + ' dBm' : '—'}</td>
-          <td>${ont.temperature !== null ? ont.temperature.toFixed(1) + ' °C' : '—'}</td>
-          <td><button class="btn btn-primary btn-xs" onclick="showOntModal(${ont.pon},${ont.ont})">⚙️</button></td>
-        </tr>`;
-    }).join('');
-    openModal('pon-modal-overlay');
+/* ─── ONT ACTIONS ─── */
+async function restartOnt(){if(!currentOntForModal||!currentOltId)return;const{pon,ont}=currentOntForModal;if(!confirm(`¿Reiniciar ONT ${pon}/${ont}?`))return;try{const r=await fetch(`/api/restart/${currentOltId}/${pon}/${ont}`,{method:'POST'});const d=await r.json();showNotif(d.success?'ONT reiniciada':d.message,d.success?'success':'error');if(d.success)closeModal('ont-modal-overlay');}catch{showNotif('Error al reiniciar','error');}}
+async function restartOntDirect(pon,ont){if(!currentOltId)return;if(!confirm(`¿Reiniciar ONT ${pon}/${ont}?`))return;try{const r=await fetch(`/api/restart/${currentOltId}/${pon}/${ont}`,{method:'POST'});const d=await r.json();showNotif(d.success?'ONT reiniciada':d.message,d.success?'success':'error');}catch{showNotif('Error al reiniciar','error');}}
+async function activateOnt(){if(!currentOntForModal||!currentOltId)return;const{pon,ont}=currentOntForModal;if(!confirm(`¿Activar ONT ${pon}/${ont}?`))return;try{const r=await fetch(`/api/activate/${currentOltId}/${pon}/${ont}`,{method:'POST'});const d=await r.json();showNotif(d.success?'ONT activada':d.message,d.success?'success':'error');if(d.success)closeModal('ont-modal-overlay');}catch{showNotif('Error','error');}}
+async function deactivateOnt(){if(!currentOntForModal||!currentOltId)return;const{pon,ont}=currentOntForModal;if(!confirm(`¿Desactivar ONT ${pon}/${ont}?`))return;try{const r=await fetch(`/api/deactivate/${currentOltId}/${pon}/${ont}`,{method:'POST'});const d=await r.json();showNotif(d.success?'ONT desactivada':d.message,d.success?'success':'error');if(d.success)closeModal('ont-modal-overlay');}catch{showNotif('Error','error');}}
+async function cleanUopFlag(){if(!currentOntForModal||!currentOltId)return;const{pon,ont}=currentOntForModal;if(!confirm(`¿Limpiar flag ONT ${pon}/${ont}?`))return;try{const r=await fetch(`/api/cleanuopflag/${currentOltId}/${pon}/${ont}`,{method:'POST'});const d=await r.json();showNotif(d.success?'Flag limpiado':d.message,d.success?'success':'error');}catch{showNotif('Error','error');}}
+
+async function saveOntName(){
+  if(!currentOntForModal||!currentOltId)return;
+  const{pon,ont}=currentOntForModal;
+  const name=document.getElementById('edit-ont-name').value.trim();
+  if(!name){showNotif('Ingrese un nombre','warning');return;}
+  const btn=document.getElementById('btn-save-name');btn.disabled=true;
+  btn.innerHTML='<div class="spinner spinner-sm" style="border-top-color:#fff;display:inline-block"></div> …';
+  try{
+    const r=await fetch('/api/ont/name',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({oltId:currentOltId,pon,ont,name})});
+    const d=await r.json();showNotif(d.success?'Nombre guardado':d.message,d.success?'success':'error');
+    if(d.success){currentOntForModal.name=name;renderTable();}
+  }catch{showNotif('Error al guardar','error');}
+  finally{btn.disabled=false;btn.innerHTML='💾 Guardar';}
 }
 
-function showAddOLTModal() {
-    document.getElementById('olt-modal-title').textContent = 'Agregar Nueva OLT';
-    document.getElementById('olt-id').value = '';
-    document.getElementById('olt-name').value = '';
-    document.getElementById('olt-host').value = '';
-    document.getElementById('olt-port').value = '23';
-    document.getElementById('olt-user').value = '';
-    document.getElementById('olt-password').value = '';
-    openModal('olt-modal-overlay');
+/* ─── SYNC / REFRESH ─── */
+function syncData(){
+  if(!currentOltId){showNotif('Seleccione OLT','warning');return;}
+  fetch(`/api/onts/${currentOltId}/refresh`,{method:'POST'}).then(()=>loadData()).catch(()=>loadData());
+  showNotif('Sincronizando…','info');
+}
+function refreshAllOpticalPower(){
+  if(!currentOltId){showNotif('Seleccione OLT','warning');return;}
+  const btn=document.getElementById('btn-refresh-optical');if(btn)btn.disabled=true;
+  fetch(`/api/onts/${currentOltId}/refresh-optical`,{method:'POST'}).then(r=>r.json()).then(d=>{if(!d.success){showNotif(d.message||'No se pudo iniciar','error');if(btn)btn.disabled=false;}}).catch(e=>{showNotif('Error: '+e.message,'error');if(btn)btn.disabled=false;});
+}
+function saveLocalData(){
+  const btn=document.getElementById('btn-save-local')||null;
+  fetch('/api/save-local',{method:'POST'}).then(r=>r.json()).then(d=>{showNotif(d.success?'Guardado ✅':('Error: '+(d.message||'')),d.success?'success':'error');}).catch(e=>showNotif('Error: '+e.message,'error'));
 }
 
-function showEditOLTModal() {
-    const olt = olts.find(o => o.id === currentOltId);
-    if (!olt) { showNotification('Seleccione una OLT primero', 'warning'); return; }
-    document.getElementById('olt-modal-title').textContent = 'Editar OLT';
-    document.getElementById('olt-id').value = olt.id;
-    document.getElementById('olt-name').value = olt.name;
-    document.getElementById('olt-host').value = olt.host;
-    document.getElementById('olt-port').value = olt.port || 23;
-    document.getElementById('olt-user').value = olt.user;
-    document.getElementById('olt-password').value = olt.password;
-    openModal('olt-modal-overlay');
+/* ─── NAV / MODALS ─── */
+function switchView(viewId,tabEl,filter){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const t=document.getElementById(viewId);if(t)t.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  if(tabEl)tabEl.classList.add('active');
+  else document.querySelectorAll('.nav-tab').forEach(t=>{if(t.getAttribute('onclick')&&t.getAttribute('onclick').includes(`'${viewId}'`))t.classList.add('active');});
+  if(filter&&viewId==='onts'){document.getElementById('filter-status').value=filter==='all'?'':filter;renderTable();}
+  if(viewId==='unauth'&&!document.getElementById('unauth-container').querySelector('.unauth-card'))loadUnauthOnts();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function filterByPon(pon){
+  document.getElementById('filter-pon').value=String(pon);
+  document.getElementById('filter-status').value='';
+  document.getElementById('table-search').value='';
+  switchView('onts',null);renderTable();
+}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');}));
+
+/* ─── EXPORT ─── */
+function exportCSV(){
+  if(!currentOntsData.length){showNotif('Sin datos','warning');return;}
+  const h=['PON','ONT','MAC','Estado','RX_dBm','TX_dBm','TxBias_mA','Temp_C','Volt_V','Uptime','UltimoOnline'];
+  const rows=currentOntsData.map(o=>[o.pon,o.ont,o.macAddress||o.serial||'',o.status==='working'?'Online':'Offline',o.rxPower??'',o.txPower??'',o.txBias??'',o.temperature??'',o.voltage??'',o.uptime||'',o.lastOnlineTime||'']);
+  const csv=[h,...rows].map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`onts_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  showNotif('CSV exportado','success');
 }
 
-async function saveOLT() {
-    const id = document.getElementById('olt-id').value;
-    const name = document.getElementById('olt-name').value.trim();
-    const host = document.getElementById('olt-host').value.trim();
-    const user = document.getElementById('olt-user').value.trim();
-    const password = document.getElementById('olt-password').value.trim();
-    if (!name || !host || !user || !password) { showNotification('Todos los campos son obligatorios', 'error'); return; }
-    try {
-        const isEdit = id && id !== '';
-        const url = isEdit ? `/api/olts/${id}` : '/api/olts';
-        const method = isEdit ? 'PUT' : 'POST';
-        const r = await fetch(url, {
-            method, headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, host, user, password })
-        });
-        const d = await r.json();
-        if (d.success) {
-            showNotification(isEdit ? 'OLT actualizada' : 'OLT agregada', 'success');
-            closeModal('olt-modal-overlay');
-            await loadOLTs();
-        } else {
-            showNotification(d.message || 'Error al guardar', 'error');
-        }
-    } catch (e) {
-        showNotification('Error de conexión', 'error');
-    }
+/* ─── THEME ─── */
+function toggleTheme(){document.body.classList.toggle('dark');localStorage.setItem('theme',document.body.classList.contains('dark')?'dark':'light');}
+function loadTheme(){if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark');}
+
+/* ─── EVENTS ─── */
+const events=[];
+function addEvent(type,msg){
+  const ts=new Date().toLocaleTimeString();events.unshift({type,msg,ts});if(events.length>200)events.pop();
+  const log=document.getElementById('event-log');if(!log)return;
+  const colors={success:'var(--green)',error:'var(--red)',info:'var(--blue)',warning:'var(--amber)'};
+  log.innerHTML=events.map(e=>`<div class="ev-row"><span class="ev-ts">${e.ts}</span><span class="ev-type" style="color:${colors[e.type]||'#888'}">${e.type}</span><span class="ev-msg">${e.msg}</span></div>`).join('');
 }
+function clearEvents(){events.length=0;const log=document.getElementById('event-log');if(log)log.innerHTML='';}
 
-async function restartOnt() {
-    if (!currentOntForModal || !currentOltId) return;
-    const { pon, ont } = currentOntForModal;
-    if (!confirm(`¿Reiniciar ONT ${pon}/${ont}?`)) return;
-    try {
-        const r = await fetch(`/api/restart/${currentOltId}/${pon}/${ont}`, { method: 'POST' });
-        const d = await r.json();
-        showNotification(d.success ? 'ONT reiniciada' : d.message, d.success ? 'success' : 'error');
-        if (d.success) closeModal('ont-modal-overlay');
-    } catch { showNotification('Error al reiniciar', 'error'); }
-}
-
-async function restartOntDirect(pon, ont) {
-    if (!currentOltId) return;
-    if (!confirm(`¿Reiniciar ONT ${pon}/${ont}?`)) return;
-    try {
-        const r = await fetch(`/api/restart/${currentOltId}/${pon}/${ont}`, { method: 'POST' });
-        const d = await r.json();
-        showNotification(d.success ? 'ONT reiniciada' : d.message, d.success ? 'success' : 'error');
-    } catch { showNotification('Error al reiniciar', 'error'); }
-}
-
-async function activateOnt() {
-    if (!currentOntForModal || !currentOltId) return;
-    const { pon, ont } = currentOntForModal;
-    if (!confirm(`¿Activar ONT ${pon}/${ont}?`)) return;
-    try {
-        const r = await fetch(`/api/activate/${currentOltId}/${pon}/${ont}`, { method: 'POST' });
-        const d = await r.json();
-        showNotification(d.success ? 'ONT activada' : d.message, d.success ? 'success' : 'error');
-        if (d.success) closeModal('ont-modal-overlay');
-    } catch { showNotification('Error al activar', 'error'); }
-}
-
-async function deactivateOnt() {
-    if (!currentOntForModal || !currentOltId) return;
-    const { pon, ont } = currentOntForModal;
-    if (!confirm(`¿Desactivar ONT ${pon}/${ont}? Esta acción la desconectará.`)) return;
-    try {
-        const r = await fetch(`/api/deactivate/${currentOltId}/${pon}/${ont}`, { method: 'POST' });
-        const d = await r.json();
-        showNotification(d.success ? 'ONT desactivada' : d.message, d.success ? 'success' : 'error');
-        if (d.success) closeModal('ont-modal-overlay');
-    } catch { showNotification('Error al desactivar', 'error'); }
-}
-
-function switchView(viewId, tabEl, filter) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const target = document.getElementById(viewId);
-    if (target) target.classList.add('active');
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    if (tabEl) tabEl.classList.add('active');
-    else {
-        document.querySelectorAll('.nav-tab').forEach(t => {
-            if (t.getAttribute('onclick') && t.getAttribute('onclick').includes(`'${viewId}'`)) t.classList.add('active');
-        });
-    }
-    if (filter && viewId === 'onts') {
-        document.getElementById('filter-status').value = filter === 'all' ? '' : filter;
-        renderTable();
-    }
-    if (viewId === 'unauth' && !document.getElementById('unauth-container').querySelector('.unauth-card')) {
-        loadUnauthOnts();
-    }
-}
-
-function filterByPon(pon) {
-    document.getElementById('filter-pon').value = String(pon);
-    document.getElementById('filter-status').value = '';
-    document.getElementById('table-search').value = '';
-    switchView('onts', null);
-    renderTable();
-}
-
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-function syncData() {
-    if (!currentOltId) { showNotification('Seleccione una OLT', 'warning'); return; }
-    fetch(`/api/onts/${currentOltId}/refresh`, { method: 'POST' })
-        .then(() => loadData()).catch(() => loadData());
-    showNotification('Sincronizando datos...', 'info');
-}
-
-function refreshAllOpticalPower() {
-    if (!currentOltId) { showNotification('Seleccione una OLT', 'warning'); return; }
-    const btn = document.getElementById('btn-refresh-optical');
-    if (btn) btn.disabled = true;
-    fetch(`/api/onts/${currentOltId}/refresh-optical`, { method: 'POST' })
-        .then(r => r.json())
-        .then(d => {
-            if (!d.success) {
-                showNotification(d.message || 'No se pudo iniciar', 'error');
-                if (btn) btn.disabled = false;
-            }
-            // Si arrancó bien, el progreso/finalización llega por WebSocket
-            // (optical_refresh_started / progress / completed), que reactiva el botón.
-        })
-        .catch(e => { showNotification('Error: ' + e.message, 'error'); if (btn) btn.disabled = false; });
-}
-
-function saveLocalData() {
-    const btn = document.getElementById('btn-save-local');
-    const originalText = btn ? btn.textContent : '';
-    if (btn) { btn.disabled = true; btn.textContent = '💾 Guardando...'; }
-    fetch('/api/save-local', { method: 'POST' })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) showNotification('Datos guardados en local ✅', 'success');
-            else showNotification('Error al guardar: ' + (data.message || ''), 'error');
-        })
-        .catch(err => showNotification('Error al guardar: ' + err.message, 'error'))
-        .finally(() => { if (btn) { btn.disabled = false; btn.textContent = originalText; } });
-}
-
-function exportCSV() {
-    if (currentOntsData.length === 0) { showNotification('No hay datos para exportar', 'warning'); return; }
-    const headers = ['PON','ONT','MAC','Estado','RX_dBm','TX_dBm','TxBias_mA','Temperatura_C','Voltaje_V','Uptime','UltimoOnline'];
-    const rows = currentOntsData.map(o => [
-        o.pon, o.ont, o.macAddress || o.serial || '',
-        o.status === 'working' ? 'Online' : 'Offline',
-        o.rxPower ?? '', o.txPower ?? '', o.txBias ?? '',
-        o.temperature ?? '', o.voltage ?? '',
-        o.uptime || '', o.lastOnlineTime || ''
-    ]);
-    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url;
-    a.download = `onts_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
-    showNotification('CSV exportado', 'success');
-}
-
-function toggleTheme() {
-    document.body.classList.toggle('dark-mode');
-    localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-}
-
-function loadTheme() {
-    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
-}
-
-const events = [];
-function addEvent(type, msg) {
-    const ts = new Date().toLocaleTimeString();
-    events.unshift({ type, msg, ts });
-    if (events.length > 200) events.pop();
-    const log = document.getElementById('event-log');
-    if (log) {
-        const colors = { success: '#10b981', error: '#ef4444', info: '#3b82f6', warning: '#f59e0b' };
-        log.innerHTML = events.map(e => `
-        <div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start">
-          <span style="font-size:11px;color:var(--text-muted);white-space:nowrap">${e.ts}</span>
-          <span style="color:${colors[e.type] || '#666'};font-weight:700;font-size:11px;text-transform:uppercase;white-space:nowrap">${e.type}</span>
-          <span style="font-size:13px">${e.msg}</span>
-        </div>`).join('');
-    }
-}
-
-function clearEvents() {
-    events.length = 0;
-    document.getElementById('event-log').innerHTML = '';
-}
-
-function showNotification(msg, type = 'info') {
-    const n = document.createElement('div');
-    n.className = `notification notification-${type}`;
-    const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-    n.innerHTML = `<span>${icons[type] || ''}</span><span>${msg}</span>`;
-    document.body.appendChild(n);
-    setTimeout(() => { n.style.opacity = '0'; n.style.transform = 'translateX(400px)'; n.style.transition = 'all 0.3s'; setTimeout(() => n.remove(), 300); }, 3500);
-}
-
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', e => {
-        if (e.target === overlay) overlay.classList.remove('open');
-    });
-});
-
-async function cleanUopFlag() {
-    if (!currentOntForModal || !currentOltId) return;
-    const { pon, ont } = currentOntForModal;
-    if (!confirm(`¿Limpiar flag de operación en ONT ${pon}/${ont}?`)) return;
-    try {
-        const r = await fetch(`/api/cleanuopflag/${currentOltId}/${pon}/${ont}`, { method: 'POST' });
-        const d = await r.json();
-        showNotification(d.success ? 'Flag limpiado' : d.message, d.success ? 'success' : 'error');
-    } catch { showNotification('Error al limpiar flag', 'error'); }
-}
-
-// ── Guardar nombre con spinner en botón ────────────────────────────────────
-async function saveOntName() {
-    if (!currentOntForModal || !currentOltId) return;
-    const { pon, ont } = currentOntForModal;
-    const name = document.getElementById('edit-ont-name').value.trim();
-    if (!name) { showNotification('Ingrese un nombre', 'warning'); return; }
-
-    const btn = document.getElementById('btn-save-name');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner spinner-sm" style="border-top-color:#fff"></div> Guardando...';
-
-    try {
-        const r = await fetch('/api/ont/name', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ oltId: currentOltId, pon, ont, name })
-        });
-        const d = await r.json();
-        showNotification(d.success ? 'Nombre guardado' : d.message, d.success ? 'success' : 'error');
-        if (d.success) {
-            currentOntForModal.name = name;
-            renderTable();
-        }
-    } catch {
-        showNotification('Error al guardar nombre', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '💾 Guardar Nombre';
-    }
+/* ─── NOTIFICATIONS ─── */
+function showNotif(msg,type='info'){
+  const n=document.createElement('div');n.className=`notif n-${type}`;
+  const icons={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  n.innerHTML=`<span>${icons[type]||''}</span><span>${msg}</span>`;
+  document.body.appendChild(n);
+  setTimeout(()=>{n.style.opacity='0';n.style.transform='translateX(340px)';n.style.transition='all .25s';setTimeout(()=>n.remove(),260);},3200);
 }
 
 init();
