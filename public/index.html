@@ -161,7 +161,7 @@ a{text-decoration:none;color:inherit}
   display:flex;
   overflow-x:auto;
   scrollbar-width:none;
-  border-bottom:1px solid rgba(255,255,255,.05);
+  border-bottom:1px solid balck;
   position:sticky;top:58px;z-index:190;
 }
 .nav::-webkit-scrollbar{display:none}
@@ -176,9 +176,9 @@ a{text-decoration:none;color:inherit}
   transition:.2s;
 }
 .nav-tab:hover{color:rgba(255,255,255,.8)}
-.nav-tab.active{color:black;border-bottom-color:var(--green)}
+.nav-tab.active{color:#fff;border-bottom-color:var(--green)}
 .nav-badge{
-  background:var(--red);color:black;
+  background:var(--red);color:#fff;
   font-size:10px;font-weight:800;
   padding:1px 5px;border-radius:10px;min-width:16px;text-align:center;
 }
@@ -515,6 +515,7 @@ input[readonly]{background:var(--bg);color:var(--tx-muted)}
   <button class="nav-tab" onclick="switchView('offline',this)">❌ Offline <span class="nav-badge" id="badge-offline">0</span></button>
   <button class="nav-tab" onclick="switchView('disconnected',this)">⚡ Deseng. <span class="nav-badge" id="badge-disconnected">0</span></button>
   <button class="nav-tab" onclick="switchView('unauth',this)">🔐 Autorizar <span class="nav-badge" id="badge-unauth">0</span></button>
+  <button class="nav-tab" onclick="switchView('attempt',this)">⏳ Intentando <span class="nav-badge" id="badge-attempt">0</span></button>
   <button class="nav-tab" onclick="switchView('authed',this)">✅ Autorizadas</button>
   <button class="nav-tab" onclick="switchView('eventos',this)">📜 Eventos</button>
 </nav>
@@ -684,6 +685,20 @@ input[readonly]{background:var(--bg);color:var(--tx-muted)}
   </div>
   <div id="unauth-container">
     <div class="loader"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- ── INTENTANDO (onuAttemptOnuList) ── -->
+<div id="attempt" class="view">
+  <div class="sec-header">
+    <div>
+      <div class="sec-title">ONTs Intentando Conectar</div>
+      <div class="sec-sub">ONTs detectadas por PON aún no autorizadas (onuAttemptOnuList)</div>
+    </div>
+    <button class="btn btn-purple btn-sm" onclick="loadAttemptOnts()">🔄 Consultar</button>
+  </div>
+  <div id="attempt-container">
+    <div class="loader"><div class="loader-text">Presiona Consultar para cargar</div></div>
   </div>
 </div>
 
@@ -886,7 +901,23 @@ function renderOLTSelector(){
   const sel=document.getElementById('olt-select');
   sel.innerHTML=olts.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
 }
-function switchOLT(){currentOltId=parseInt(document.getElementById('olt-select').value);currentData=null;currentOntsData=[];loadData();}
+function switchOLT(){
+  currentOltId=parseInt(document.getElementById('olt-select').value);
+  currentData=null;
+  currentOntsData=[];
+  // Limpiar contenedores de attempt, authed y unauth
+  const attemptC=document.getElementById('attempt-container');
+  if(attemptC)attemptC.innerHTML='';
+  const authedC=document.getElementById('authed-container');
+  if(authedC)authedC.innerHTML='';
+  const unauthC=document.getElementById('unauth-container');
+  if(unauthC)unauthC.innerHTML='';
+  // Limpiar badges
+  document.getElementById('badge-attempt').textContent='';
+  document.getElementById('badge-authed').textContent='';
+  document.getElementById('badge-unauth').textContent='';
+  loadData();
+}
 
 async function loadData(){
   if(!currentOltId)return;
@@ -1106,43 +1137,109 @@ function renderDisconnected(data){
 }
 
 /* ─── UNAUTH ─── */
-async function loadUnauthOnts(){
-  if(!currentOltId){showNotif('Seleccione una OLT','warning');return;}
-  const c=document.getElementById('unauth-container');
-  c.innerHTML='<div class="loader"><div class="spinner"></div><div class="loader-text">Buscando vía autofind (~25s)…</div></div>';
-  try{const r=await fetch(`/api/unauth/${currentOltId}`);const d=await r.json();if(d.error)showNotif('Error: '+d.error,'warning');renderUnauthOnts(d.unauth||[],d.rawOutput||'');}
-  catch(e){c.innerHTML=`<div class="loader"><div class="loader-text">Error: ${e.message}</div></div>`;}
+
+async function loadUnauthOnts() {
+  if (!currentOltId) {
+    showNotif('Seleccione una OLT', 'warning');
+    return;
+  }
+
+  const c = document.getElementById('unauth-container');
+  const maxPon = currentData && currentData.pons
+    ? Math.max(...currentData.pons.map(p => p.pon))
+    : 8;
+
+  c.innerHTML = '<div class="loader"><div class="spinner"></div><div class="loader-text">Buscando ONTs no autorizadas (~15s)…</div></div>';
+
+  try {
+    const r = await fetch(`/api/unauth/${currentOltId}?maxPon=${maxPon}`);
+    const d = await r.json();
+
+    if (d.error) showNotif('Error: ' + d.error, 'warning');
+
+    renderUnauthOnts(d.unauth || [], d.rawOutput || '');
+
+  } catch (e) {
+    c.innerHTML = `<div class="loader"><div class="loader-text">Error: ${e.message}</div></div>`;
+  }
 }
-function renderUnauthOnts(list,rawOutput){
-  const c=document.getElementById('unauth-container');
-  document.getElementById('badge-unauth').textContent=list.length;
-  const raw=rawOutput?`<details style="margin-top:14px"><summary style="cursor:pointer;font-size:12px;color:var(--tx-muted);font-weight:700">🔎 Ver salida raw</summary><pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:8px;overflow:auto;margin-top:8px;max-height:260px;color:var(--tx)">${rawOutput.replace(/</g,'&lt;')}</pre></details>`:'';
-  if(!list.length){c.innerHTML=`<div class="loader"><div style="font-size:40px">🔐</div><div class="loader-text" style="margin-top:10px">Sin ONTs no autorizadas</div></div><div style="margin-top:14px"><button class="btn btn-purple btn-sm" onclick="showAuthModal()">➕ Autorizar manual</button></div>${raw}`;return;}
-  c.innerHTML=`<div class="alert-bar">🔐 ${list.length} pendiente${list.length>1?'s':''} de autorización</div>
-  ${list.map(u=>`<div class="unauth-card" data-mac="${u.mac}">
-    <div><div class="ua-mac">${u.mac}</div><div class="ua-meta">PON ${u.pon??'?'} · ONT ${u.ont??'?'} · ${u.detectedAt?new Date(u.detectedAt).toLocaleString():'Desconocido'}</div></div>
-    <button class="btn btn-purple btn-sm" onclick="showAuthModal('${u.mac}','${u.pon||''}')">✅ Autorizar</button>
-  </div>`).join('')}
-  <div style="margin-top:14px"><button class="btn btn-purple btn-sm" onclick="showAuthModal()">➕ Autorizar manual</button></div>
-  ${raw}`;
+
+function renderUnauthOnts(list, rawOutput) {
+
+  const c = document.getElementById('unauth-container');
+  document.getElementById('badge-unauth').textContent = list.length;
+
+  const raw = rawOutput
+    ? `<details style="margin-top:14px">
+        <summary style="cursor:pointer;font-size:12px;color:var(--tx-muted);font-weight:700">🔎 Ver salida raw</summary>
+        <pre style="font-size:11px;background:var(--bg);padding:12px;border-radius:8px;overflow:auto;margin-top:8px;max-height:260px;color:var(--tx)">${rawOutput.replace(/</g,'&lt;')}</pre>
+      </details>`
+    : '';
+
+  if (!list.length) {
+    c.innerHTML = `
+      <div class="loader">
+        <div style="font-size:40px">🔐</div>
+        <div class="loader-text" style="margin-top:10px">Sin ONTs no autorizadas</div>
+      </div>
+      ${raw}`;
+    return;
+  }
+
+  c.innerHTML = `
+    <div class="alert-bar">
+      🔐 ${list.length} pendiente${list.length>1?'s':''} de autorización
+    </div>
+
+    ${list.map(u=>`
+      <div class="unauth-card" data-mac="${u.onuMac}">
+        <div>
+          <div class="ua-mac">${u.onuMac}</div>
+          <div class="ua-meta">
+            ${u.onuId} · PON ${u.pon}
+          </div>
+        </div>
+
+        <button
+          class="btn btn-purple btn-sm"
+          onclick="authorizeOnt('${u.onuId}','${u.onuMac}')">
+          ✅ Autorizar
+        </button>
+      </div>
+    `).join('')}
+
+    ${raw}
+  `;
 }
-function showAuthModal(mac='',pon=''){
-  document.getElementById('auth-mac').value=mac;
-  document.getElementById('auth-pon').value=pon;
-  const ob=document.getElementById('auth-output-box');ob.style.display='none';ob.textContent='';
-  openModal('auth-modal-overlay');
-}
-async function authorizeOnt(){
-  const mac=document.getElementById('auth-mac').value.trim();
-  const pon=document.getElementById('auth-pon').value.trim();
-  if(!mac||!pon){showNotif('MAC y PON requeridos','error');return;}
-  const ob=document.getElementById('auth-output-box');ob.style.display='block';ob.textContent='Enviando whitelist add…';
-  try{
-    const r=await fetch(`/api/unauth/${currentOltId}/authorize`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac,pon:parseInt(pon)})});
-    const d=await r.json();ob.textContent=d.output||d.message||'';
-    if(d.success){showNotif(d.message,'success');const card=document.querySelector(`.unauth-card[data-mac="${mac.toUpperCase()}"]`);if(card)card.remove();const b=document.getElementById('badge-unauth');if(b)b.textContent=Math.max(0,parseInt(b.textContent||'0')-1);setTimeout(()=>closeModal('auth-modal-overlay'),2000);}
-    else showNotif(d.message||'Error al autorizar','error');
-  }catch(e){ob.textContent='Error: '+e.message;showNotif('Error al autorizar','error');}
+
+async function authorizeOnt(onuId, onuMac) {
+
+  try {
+
+    const r = await fetch(`/api/unauth/${currentOltId}/authorize`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        onuId,
+        onuMac
+      })
+    });
+
+    const d = await r.json();
+
+    if (d.success) {
+      showNotif('ONT autorizada', 'success');
+      loadUnauthOnts();
+    } else {
+      showNotif(d.message, 'error');
+    }
+
+  } catch (e) {
+    showNotif(e.message, 'error');
+  }
+
 }
 
 /* ─── ONT MODAL ─── */
@@ -1209,36 +1306,105 @@ async function refreshOntOptical(){
 async function loadAuthedOnts(){
   if(!currentOltId){showNotif('Seleccione OLT','warning');return;}
   const c=document.getElementById('authed-container');
-  c.innerHTML='<div class="loader"><div class="spinner"></div><div class="loader-text">Consultando OLT…</div></div>';
+  const maxPon=currentData&&currentData.pons?Math.max(...currentData.pons.map(p=>p.pon)):8;
+  c.innerHTML='<div class="loader"><div class="spinner"></div><div class="loader-text">Consultando PONs 1-'+maxPon+'…</div></div>';
   try{
-    const r=await fetch(`/api/authed/${currentOltId}`);const d=await r.json();
+    const r=await fetch(`/api/authed/${currentOltId}?maxPon=${maxPon}`);const d=await r.json();
     if(!d.success){c.innerHTML=`<div class="loader"><div class="loader-text">Error: ${d.message}</div></div>`;return;}
     renderAuthedOnts(d.pons);
   }catch(e){c.innerHTML=`<div class="loader"><div class="loader-text">Error: ${e.message}</div></div>`;}
 }
 function renderAuthedOnts(pons){
   const c=document.getElementById('authed-container');
-  const nums=Object.keys(pons).sort((a,b)=>parseInt(a)-parseInt(b));
-  if(!nums.length){c.innerHTML='<div class="loader"><div class="loader-text">Sin PONs</div></div>';return;}
+  const nums=Object.keys(pons).filter(pn=>pons[pn].total>0||pons[pn].error).sort((a,b)=>parseInt(a)-parseInt(b));
+  if(!nums.length){c.innerHTML='<div class="loader"><div class="loader-text">Sin ONTs autorizadas en ningún PON</div></div>';return;}
   c.innerHTML=nums.map(pn=>{
     const{list,total,cached,error}=pons[pn];
     return `<div class="table-card authed-block">
       <div class="table-head">
-        <div class="table-title">PON ${pn} — ${total} autorizadas${cached?' <span style="font-size:10px;color:var(--amber)">(caché)</span>':''}${error?' <span style="font-size:10px;color:var(--red)">Error</span>':''}</div>
+        <div class="table-title">PON 0/${pn} — ${total} autorizadas${cached?' <span style="font-size:10px;color:var(--amber)">(caché)</span>':''}${error?' <span style="font-size:10px;color:var(--red)">Error</span>':''}</div>
       </div>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>#</th><th>MAC</th><th>ONU ID</th><th>Estado</th></tr></thead>
-          <tbody>${!list.length?'<tr><td colspan="4" class="empty-row">Sin ONTs autorizadas</td></tr>':list.map((o,i)=>`<tr>
+          <thead><tr><th>#</th><th>ONU ID</th><th>MAC</th><th></th></tr></thead>
+          <tbody>${!list||!list.length?'<tr><td colspan="4" class="empty-row">Sin ONTs autorizadas</td></tr>':list.map((o,i)=>`<tr id="authed-row-${(o.onuId||'').replace(/\//g,'-').replace(/:/g,'_')}">
             <td style="color:var(--tx-muted)">${i+1}</td>
-            <td style="font-family:var(--font-mono);font-weight:700">${o.mac}</td>
-            <td style="color:var(--blue)">${o.onuId||'—'}</td>
-            <td>${o.status?`<span class="badge ${/up/i.test(o.status)?'b-online':'b-offline'}">${o.status}</span>`:'—'}</td>
+            <td style="color:var(--blue);font-family:var(--font-mono)">${o.onuId||'—'}</td>
+            <td style="font-family:var(--font-mono);font-weight:700">${o.onuMac}</td>
+<td><button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="deleteAuthedOnt('${o.onuId}','${o.onuMac}')">🗑️</button></td>
           </tr>`).join('')}</tbody>
         </table>
       </div>
     </div>`;
   }).join('');
+}
+async function deleteAuthedOnt(onuId,onuMac){
+  if(!confirm(`¿Eliminar autorización de ${onuId} (${onuMac})?`))return;
+  try{
+    const r=await fetch(`/api/authed/${currentOltId}`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({onuId,onuMac})});
+    const d=await r.json();
+    if(d.success){
+      showNotif(d.message,'success');
+      // quitar fila del DOM
+      const rowId='authed-row-'+(onuId||'').replace(/\//g,'-').replace(/:/g,'_');
+      const row=document.getElementById(rowId);
+      if(row)row.remove();
+    }else showNotif(d.message||'Error al eliminar','error');
+  }catch(e){showNotif('Error: '+e.message,'error');}
+}
+
+/* ─── INTENTANDO (attempt) ─── */
+async function loadAttemptOnts(){
+  if(!currentOltId){showNotif('Seleccione OLT','warning');return;}
+  const c=document.getElementById('attempt-container');
+  const maxPon=currentData&&currentData.pons?Math.max(...currentData.pons.map(p=>p.pon)):8;
+  c.innerHTML='<div class="loader"><div class="spinner"></div><div class="loader-text">Consultando PONs 1-'+maxPon+'…</div></div>';
+  try{
+    const r=await fetch(`/api/attempt/${currentOltId}?maxPon=${maxPon}`);const d=await r.json();
+    if(!d.success){c.innerHTML=`<div class="loader"><div class="loader-text">Error: ${d.message}</div></div>`;return;}
+    renderAttemptOnts(d.pons);
+  }catch(e){c.innerHTML=`<div class="loader"><div class="loader-text">Error: ${e.message}</div></div>`;}
+}
+function renderAttemptOnts(pons){
+  const c=document.getElementById('attempt-container');
+  const nums=Object.keys(pons).sort((a,b)=>parseInt(a)-parseInt(b));
+  // total global para badge
+  const totalGlobal=nums.reduce((acc,pn)=>acc+(pons[pn].total||0),0);
+  document.getElementById('badge-attempt').textContent=totalGlobal||'';
+  const withData=nums.filter(pn=>pons[pn].total>0||pons[pn].error);
+  if(!withData.length){
+    c.innerHTML='<div class="loader"><div class="loader-text">Sin ONTs intentando conectar en ningún PON</div></div>';
+    return;
+  }
+  c.innerHTML=withData.map(pn=>{
+    const{list,total,error}=pons[pn];
+    return `<div class="table-card authed-block">
+      <div class="table-head">
+        <div class="table-title">PON 0/${pn} — ${total} intentando${error?' <span style="font-size:10px;color:var(--red)">Error</span>':''}</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>#</th><th>ONU ID</th><th>MAC</th><th>Acción</th></tr></thead>
+          <tbody>${!list||!list.length?'<tr><td colspan="4" class="empty-row">Sin ONTs</td></tr>':list.map((o,i)=>`<tr>
+            <td style="color:var(--tx-muted)">${i+1}</td>
+            <td style="color:var(--blue);font-family:var(--font-mono)">${o.onuId||'—'}</td>
+            <td style="font-family:var(--font-mono);font-weight:700">${o.mac}</td>
+            <td><button class="btn btn-green btn-xs" onclick="quickAuthorize('${pn}','${o.mac}')">✅ Autorizar</button></td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function quickAuthorize(pon,mac){
+  if(!currentOltId){showNotif('Seleccione OLT','warning');return;}
+  showNotif(`Autorizando ${mac} en PON ${pon}…`,'info');
+  try{
+    const r=await fetch(`/api/unauth/${currentOltId}/authorize`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mac,pon:parseInt(pon)})});
+    const d=await r.json();
+    if(d.success){showNotif(d.message,'success');setTimeout(()=>loadAttemptOnts(),1500);}
+    else showNotif(d.message||'Error al autorizar','error');
+  }catch(e){showNotif('Error: '+e.message,'error');}
 }
 
 /* ─── PON MODAL ─── */
@@ -1348,6 +1514,7 @@ function switchView(viewId,tabEl,filter){
   else document.querySelectorAll('.nav-tab').forEach(t=>{if(t.getAttribute('onclick')&&t.getAttribute('onclick').includes(`'${viewId}'`))t.classList.add('active');});
   if(filter&&viewId==='onts'){document.getElementById('filter-status').value=filter==='all'?'':filter;renderTable();}
   if(viewId==='unauth'&&!document.getElementById('unauth-container').querySelector('.unauth-card'))loadUnauthOnts();
+  if(viewId==='attempt'&&!document.getElementById('attempt-container').querySelector('.table-card'))loadAttemptOnts();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function filterByPon(pon){

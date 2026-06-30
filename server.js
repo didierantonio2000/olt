@@ -191,140 +191,6 @@ function parseEponRange(text) {
 // detectamos ese error de rango, paramos el loop ahí mismo — ya sabemos
 // cuántos PON tiene la OLT, no hace falta seguir adivinando.
 //
-async function detectUnauthEPON(host, user, password, maxPons = 8) {
-    return new Promise((resolve) => {
-        const socket = net.createConnection({ host, port: 23 });
-        let buf = "";
-        let debugLog = "";
-        let done = false;
-
-        const log = (s) => { debugLog += s + "\n"; };
-
-        const finish = (result) => {
-            if (done) return;
-            done = true;
-            clearTimeout(globalTimer);
-            try { socket.write("exit\r\n"); socket.end(); } catch (_) {}
-            resolve({ ...result, debugLog });
-        };
-
-        // 45s total: 8 PONs × ~4s c/u + auth ~6s
-        const globalTimer = setTimeout(() => {
-            log("[TIMEOUT GLOBAL — devolviendo lo que se obtuvo]");
-            finish({ unauthList: [], error: "Timeout global" });
-        }, 45000);
-
-        socket.on("data", (d) => {
-            buf += d.toString();
-            // Responder paginación automáticamente
-            if (buf.includes("-- Enter Key To Continue --") || buf.includes("--More--"))
-                socket.write(" ");
-        });
-
-        // waitBuf: espera el patrón OR timeout — nunca rechaza
-        const waitBuf = (pattern, ms = 6000) => new Promise((res) => {
-            const t = Date.now();
-            const tick = () => {
-                if (pattern.test(buf) || Date.now() - t > ms) {
-                    const out = buf; buf = ""; res(out);
-                } else setTimeout(tick, 80);
-            };
-            tick();
-        });
-
-        socket.on("connect", async () => {
-            try {
-                // ── Auth ────────────────────────────────────────────────────
-                let out = await waitBuf(/Username:/i, 8000);
-                log("LOGIN PROMPT:\n" + out.trim());
-                socket.write(`${user}\r\n`);
-
-                out = await waitBuf(/Password:/i, 6000);
-                socket.write(`${password}\r\n`);
-
-                // Post-login: puede ser EPON> o EPON#
-                out = await waitBuf(/EPON[>#]/, 6000);
-                log("POST-LOGIN:\n" + out.trim());
-
-                if (/EPON>/.test(out)) {
-                    socket.write("enable\r\n");
-                    out = await waitBuf(/EPON#/, 5000);
-                    log("POST-ENABLE:\n" + out.trim());
-                }
-
-                // ── configure terminal → epon ───────────────────────────────
-                socket.write("configure terminal\r\n");
-                out = await waitBuf(/EPON[^>]*#/, 4000);
-                log("configure terminal:\n" + out.trim());
-
-                socket.write("epon\r\n");
-                out = await waitBuf(/EPON\(epon\)#/, 5000);
-                log("epon:\n" + out.trim());
-
-                // ── Loop por PONs ────────────────────────────────────────────
-                const unauthList = [];
-
-                for (let p = 1; p <= maxPons; p++) {
-                    // Entramos a interface epon 0/P desde EPON(epon)#
-                    socket.write(`interface epon 0/${p}\r\n`);
-                    out = await waitBuf(/EPON[^>]*#/, 4000);
-                    log(`\ninterface epon 0/${p}:\n${out.trim()}`);
-
-                    if (isFirmwareError(out)) {
-                        const range = parseEponRange(out);
-                        if (range) {
-                            log(`  → Rango válido de PON en esta OLT: ${range.min}~${range.max}. Deteniendo escaneo (no hay más puertos físicos).`);
-                            break; // ya sabemos el límite real, no seguir
-                        }
-                        log(`  → PON ${p} no disponible, continuando: ${out.trim().split("\n").find(l => l.startsWith("%")) || out.trim()}`);
-                        continue;
-                    }
-
-                    // Estamos dentro de EPON(epon_0/P)# — pedir ONTs pendientes
-                    socket.write("show attempt onu\r\n");
-                    out = await waitBuf(/EPON\(epon_0\/\d+\)#/, 5000);
-                    log(`show attempt onu PON ${p}:\n${out}`);
-
-                    // Extraer MACs de la salida
-                    const macRegex = /([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})/gi;
-                    let m;
-                    while ((m = macRegex.exec(out)) !== null) {
-                        const mac = m[1].toUpperCase();
-                        if (mac === "FF:FF:FF:FF:FF:FF") continue;
-                        if (mac.startsWith("01:") || mac.startsWith("33:")) continue;
-                        if (!unauthList.find(u => u.mac === mac)) {
-                            unauthList.push({ mac, pon: p, detectedAt: new Date().toISOString() });
-                            log(`  ✓ NO AUTORIZADA en PON ${p}: ${mac}`);
-                        }
-                    }
-
-                    // Salir de EPON(epon_0/P)# → volver a EPON(epon)#
-                    socket.write("exit\r\n");
-                    out = await waitBuf(/EPON\(epon\)#/, 4000);
-                    log(`exit → EPON(epon)#:\n${out.trim()}`);
-                }
-
-                log(`\n=== TOTAL no autorizadas: ${unauthList.length} ===`);
-                finish({ unauthList, error: null });
-
-            } catch (e) {
-                log("EXCEPCION: " + e.message);
-                finish({ unauthList: [], error: e.message });
-            }
-        });
-
-        socket.on("error", (e) => {
-            log("SOCKET ERROR: " + e.message);
-            finish({ unauthList: [], error: e.message });
-        });
-        socket.on("timeout", () => {
-            log("SOCKET TIMEOUT");
-            finish({ unauthList: [], error: "TCP timeout" });
-        });
-    });
-}
-
-
 // ── Scraper HTTP para OLTs tipo "http" (onuAllPonOnuList.asp) ─────────────
 // Campos reales del firmware (22 por ONT, verificados con data real):
 //  [0]  "0/P:O"   [1]  nombre  [2]  MAC  [3]  Up/Down
@@ -768,190 +634,86 @@ app.get("/api/unauth/:oltId", async (req, res) => {
 
     try {
         console.log(`[unauth] Escaneando ONTs pendientes en ${olt.host}...`);
-        const { unauthList, debugLog, error } = await detectUnauthEPON(
-            olt.host, olt.user, olt.password, 8
-        );
+        const maxPon = parseInt(req.query.maxPon) || 8; // Obtener maxPon del query, por defecto 8
+        const allUnauth = [];
 
-        console.log(`[unauth] Encontradas: ${unauthList.length}`);
+        for (let ponNum = 1; ponNum <= maxPon; ponNum++) {
+            try {
+                const ponId = `0/${ponNum}`;
+                const html  = await httpGetOLT(
+                    olt.host, olt.user, olt.password,
+                    `/onuAttemptOnuList.asp?oltponno=${encodeURIComponent(ponId)}`
+                );
+                const list = parseAttemptList(html);
+                list.forEach(ont => allUnauth.push({ ...ont, pon: ponNum }));
+            } catch (e) {
+                console.warn(`[unauth] Error al escanear PON 0/${ponNum} en ${olt.host}: ${e.message}`);
+            }
+        }
 
-        unauthOnts[oltId] = unauthList;
+        console.log(`[unauth] Encontradas: ${allUnauth.length}`);
+
+        unauthOnts[oltId] = allUnauth;
         await saveUnauth();
 
         res.json({
             success: true,
-            unauth: unauthList,
-            rawOutput: debugLog,
+            unauth: allUnauth,
             summary: {
-                unauthorized: unauthList.length,
-                error: error || null
+                unauthorized: allUnauth.length,
+                error: null
             }
         });
     } catch (e) {
         console.error(`[unauth] Error:`, e.message);
         res.json({
-            success: true,
+            success: false,
             unauth: unauthOnts[oltId] || [],
-            rawOutput: e.message,
             error: e.message
         });
     }
 });
-
-// ── API: Autorizar ONT (HiOSO HA7104) ────────────────────────────────────
-// Flujo actual (NO confirmado todavía con la consola real del OLT):
-//   enable → configure terminal → epon → interface epon 0/<pon>
-//   whitelist add <mac>
-// El prompt dentro del PON es EPON(epon_0/X)#
-//
-// ⚠️ Pendiente: confirmar con "interface epon 0/X" + "?" en la consola
-// real cuál es el comando exacto de autorización en este firmware.
-// Mientras tanto se deja "whitelist add <mac>" tal como estaba.
 app.post("/api/unauth/:oltId/authorize", async (req, res) => {
-    const oltId = parseInt(req.params.oltId);
-    const olt = olts.find(o => o.id === oltId);
-    if (!olt) return res.status(404).json({ success: false, message: "OLT no encontrada" });
+    try {
+        const oltId = parseInt(req.params.oltId);
+        const olt = olts.find(o => o.id === oltId);
 
-    const { pon, mac } = req.body;
-    if (!pon || !mac)
-        return res.status(400).json({ success: false, message: "Faltan parámetros: pon y mac son obligatorios" });
+        if (!olt)
+            return res.status(404).json({ success: false, message: "OLT no encontrada" });
 
-    const macClean = mac.trim().toLowerCase();
+        const { onuId, onuMac } = req.body;
 
-    return new Promise((resolveReq) => {
-        const socket = net.createConnection({ host: olt.host, port: 23 });
-        let buf = "";
-        let debugLog = "";
-        let responded = false; // evita mandar la respuesta HTTP dos veces (timeout + éxito casi simultáneo)
+        if (!onuId || !onuMac)
+            return res.status(400).json({
+                success: false,
+                message: "onuId y onuMac son obligatorios"
+            });
 
-        const log = (s) => { debugLog += s + "\n"; console.log(`[authorize] ${s}`); };
+  const result = await httpGetOLT(
+    olt.host,
+    olt.user,
+    olt.password,
+    "/goform/confirmAttemptOnu",
+    8000,
+    "POST",
+    {
+        onuId,
+        onuMac: onuMac.toLowerCase()
+    }
+);
 
-        const respond = (statusCode, body, success) => {
-            if (responded) return;
-            responded = true;
-            clearTimeout(globalTimer);
-            try { socket.write("exit\r\n"); socket.end(); } catch (_) {}
-            if (success) {
-                if (unauthOnts[oltId])
-                    unauthOnts[oltId] = unauthOnts[oltId].filter(u => u.mac !== mac.toUpperCase());
-                saveUnauth().catch(() => {});
-                if (ontCache[oltId]) ontCache[oltId].timestamp = 0;
-                broadcast("ont_authorized", { oltId, pon, mac: macClean });
-            }
-            resolveReq(res.status(statusCode).json(body));
-        };
-
-        const globalTimer = setTimeout(() => {
-            respond(500, { success: false, message: "Timeout al autorizar", output: debugLog }, false);
-        }, 30000);
-
-        socket.on("data", (d) => {
-            buf += d.toString();
-            if (buf.includes("-- Enter Key To Continue --") || buf.includes("--More--"))
-                socket.write(" ");
+        res.json({
+            success: true,
+            message: "ONT autorizada correctamente",
+            output: result
         });
 
-        const waitBuf = (pattern, ms = 6000) => new Promise((res2) => {
-            const t = Date.now();
-            const tick = () => {
-                if (pattern.test(buf) || Date.now() - t > ms) {
-                    const out = buf; buf = ""; res2(out);
-                } else setTimeout(tick, 80);
-            };
-            tick();
+    } catch (e) {
+        res.status(500).json({
+            success: false,
+            message: e.message
         });
-
-        socket.on("connect", async () => {
-            try {
-                let out;
-
-                // Auth
-                out = await waitBuf(/Username:/i, 8000);
-                log("USERNAME: " + out.trim());
-                socket.write(`${olt.user}\r\n`);
-
-                out = await waitBuf(/Password:/i, 6000);
-                socket.write(`${olt.password}\r\n`);
-
-                out = await waitBuf(/EPON[>#]/, 6000);
-                log("POST-LOGIN: " + out.trim());
-
-                if (/EPON>/.test(out)) {
-                    socket.write("enable\r\n");
-                    out = await waitBuf(/EPON#/, 5000);
-                    log("POST-ENABLE: " + out.trim());
-                }
-
-                // configure terminal
-                socket.write("configure terminal\r\n");
-                out = await waitBuf(/EPON[^>]*#/, 4000);
-                log("configure terminal: " + out.trim());
-
-                // epon
-                socket.write("epon\r\n");
-                out = await waitBuf(/EPON\(epon\)#/, 5000);
-                log("epon: " + out.trim());
-
-                // interface epon 0/<pon>
-                socket.write(`interface epon 0/${pon}\r\n`);
-                out = await waitBuf(/EPON[^>]*#/, 5000);
-                log(`interface epon 0/${pon}: ${out.trim()}`);
-
-                if (isFirmwareError(out)) {
-                    return respond(200, {
-                        success: false,
-                        message: `La OLT rechazó el PON ${pon}: ${out.trim().split("\n").find(l => l.startsWith("%")) || out.trim()}`,
-                        output: debugLog
-                    }, false);
-                }
-
-                // whitelist add <mac>
-                socket.write(`whitelist add ${macClean}\r\n`);
-                out = await waitBuf(/EPON\(epon_0\/\d+\)#/, 5000);
-                log(`whitelist add ${macClean}: ${out.trim()}`);
-
-                if (isFirmwareError(out)) {
-                    return respond(200, {
-                        success: false,
-                        message: `La OLT rechazó el comando whitelist add: ${out.trim().split("\n").find(l => l.startsWith("%")) || out.trim()}`,
-                        output: debugLog
-                    }, false);
-                }
-
-                // Salir hasta EPON# para poder hacer write
-                socket.write("exit\r\n");  // sale de epon_0/X → epon
-                out = await waitBuf(/EPON\(epon\)#/, 3000);
-                log(`exit (epon): ${out.trim()}`);
-
-                socket.write("exit\r\n");  // sale de epon → config
-                out = await waitBuf(/EPON[^>]*#/, 3000);
-                log(`exit (config): ${out.trim()}`);
-
-                socket.write("exit\r\n");  // sale de config → enable
-                out = await waitBuf(/EPON#/, 3000);
-                log(`exit (enable): ${out.trim()}`);
-
-                // Guardar configuración en flash
-                socket.write("write\r\n");
-                out = await waitBuf(/EPON#/, 6000);
-                log(`write: ${out.trim()}`);
-
-                respond(200, {
-                    success: true,
-                    message: `ONT ${macClean} autorizada en PON ${pon}`,
-                    output: debugLog
-                }, true);
-
-            } catch (e) {
-                log("EXCEPCION: " + e.message);
-                respond(500, { success: false, message: e.message, output: debugLog }, false);
-            }
-        });
-
-        socket.on("error", (e) => {
-            log("SOCKET ERROR: " + e.message);
-            respond(500, { success: false, message: e.message, output: debugLog }, false);
-        });
-    });
+    }
 });
 
 // ── API: Reiniciar ONT (HTTP goform rebootOp) ─────────────────────────────
@@ -1117,25 +879,51 @@ function httpPostGoform(host, user, password, onuId, onuName, onuOperation, time
     });
 }
 
-// ── Helper: HTTP GET autenticado a la OLT ─────────────────────────────────
-function httpGetOLT(host, user, password, path, timeoutMs = 8000) {
+// ── Helper: HTTP autenticado a la OLT (GET / POST) ─────────────────────────
+function httpGetOLT(host, user, password, path, timeoutMs = 8000, method = "GET", postData = null) {
     return new Promise((resolve, reject) => {
+
         const auth = Buffer.from(`${user}:${password}`).toString("base64");
+
+        const body = postData
+            ? new URLSearchParams(postData).toString()
+            : "";
+
         const options = {
-            hostname: host, port: 80, path, method: "GET",
+            hostname: host,
+            port: 80,
+            path,
+            method,
             headers: {
                 "Authorization": `Basic ${auth}`,
                 "Referer": `http://${host}/`
             },
             timeout: timeoutMs
         };
+
+        if (method === "POST") {
+            options.headers["Content-Type"] = "application/x-www-form-urlencoded";
+            options.headers["Content-Length"] = Buffer.byteLength(body);
+        }
+
         const req = http.request(options, (res) => {
             let raw = "";
+
             res.on("data", d => raw += d.toString());
+
             res.on("end", () => resolve(raw));
         });
-        req.on("timeout", () => { req.destroy(); reject(new Error(`HTTP timeout ${host}${path}`)); });
+
+        req.on("timeout", () => {
+            req.destroy();
+            reject(new Error(`HTTP timeout ${host}${path}`));
+        });
+
         req.on("error", reject);
+
+        if (method === "POST" && body)
+            req.write(body);
+
         req.end();
     });
 }
@@ -1385,64 +1173,107 @@ async function saveAuthed() {
     try { await fs.writeFile(AUTHED_FILE, JSON.stringify(authedOnts, null, 2)); }
     catch (e) { console.error("Error guardando authed_onts:", e.message); }
 }
-
 function parseAuthedList(html) {
-    // La tabla tiene filas con: MAC, ONU ID, Status, etc.
-    // Extraemos los valores de las celdas <td>
-    const rows = [];
-    const trRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-    let trM;
-    while ((trM = trRe.exec(html)) !== null) {
-        const tdRe = /<td[^>]*>\s*([^<]*)\s*<\/td>/gi;
-        const cells = [];
-        let tdM;
-        while ((tdM = tdRe.exec(trM[1])) !== null) {
-            cells.push(tdM[1].trim());
-        }
-        if (cells.length >= 2 && /^[0-9A-Fa-f:]{17}$/.test(cells[0])) {
-            rows.push({
-                mac:    cells[0].toUpperCase(),
-                onuId:  cells[1] || null,
-                status: cells[2] || null,
-                extra:  cells.slice(3)
-            });
-        }
+    const list = [];
+
+    const match = html.match(/var\s+ponOnuTable\s*=\s*new\s+Array\s*\(([\s\S]*?)\);/i);
+    if (!match) return list;
+
+    const data = match[1];
+
+    const re = /'([^']+)'\s*,\s*'([0-9A-Fa-f:]{17})'/g;
+    let m;
+
+    while ((m = re.exec(data)) !== null) {
+        list.push({
+            onuId: m[1].trim(),
+            onuMac: m[2].toUpperCase()
+        });
     }
-    return rows;
+
+    return list;
+}
+
+// Attempt usa exactamente el mismo formato
+function parseAttemptList(html) {
+    return parseAuthedList(html);
 }
 
 app.get("/api/authed/:oltId/:pon", async (req, res) => {
     const oltId = parseInt(req.params.oltId);
-    const pon   = req.params.pon;
-    const olt   = olts.find(o => o.id === oltId);
-    if (!olt) return res.status(404).json({ success: false, message: "OLT no encontrada" });
+    const pon = req.params.pon;
+
+    const olt = olts.find(o => o.id === oltId);
+
+    if (!olt) {
+        return res.status(404).json({
+            success: false,
+            message: "OLT no encontrada"
+        });
+    }
+
     try {
+
         const ponId = `0/${pon}`;
-        const html  = await httpGetOLT(
-            olt.host, olt.user, olt.password,
+
+        const html = await httpGetOLT(
+            olt.host,
+            olt.user,
+            olt.password,
             `/onuMacAuthedOnuList.asp?oltponno=${encodeURIComponent(ponId)}`
         );
+
         const list = parseAuthedList(html);
-        if (!authedOnts[oltId]) authedOnts[oltId] = {};
-        authedOnts[oltId][pon] = { list, updatedAt: new Date().toISOString() };
-        saveAuthed().catch(() => {});
-        res.json({ success: true, pon: ponId, list, total: list.length });
+
+        if (!authedOnts[oltId])
+            authedOnts[oltId] = {};
+
+        authedOnts[oltId][pon] = {
+            list,
+            updatedAt: new Date().toISOString()
+        };
+
+        saveAuthed().catch(console.error);
+
+        return res.json({
+            success: true,
+            pon: ponId,
+            total: list.length,
+            list
+        });
+
     } catch (e) {
-        // Devolver caché si existe
-        const cached = (authedOnts[oltId] || {})[pon];
-        if (cached) return res.json({ success: true, pon: `0/${pon}`, list: cached.list, total: cached.list.length, cached: true });
-        res.status(500).json({ success: false, message: e.message });
+
+        const cached = authedOnts[oltId]?.[pon];
+
+        if (cached) {
+            return res.json({
+                success: true,
+                cached: true,
+                pon: `0/${pon}`,
+                total: cached.list.length,
+                list: cached.list
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: e.message
+        });
     }
 });
 
+// GET /api/authed/:oltId  → consulta los PONs reales de la OLT (maxPon del query param)
 app.get("/api/authed/:oltId", async (req, res) => {
-    const oltId = parseInt(req.params.oltId);
-    const olt   = olts.find(o => o.id === oltId);
+    const oltId  = parseInt(req.params.oltId);
+    const olt    = olts.find(o => o.id === oltId);
     if (!olt) return res.status(404).json({ success: false, message: "OLT no encontrada" });
-    // Detectar PONs activos del caché
-    const activePons = ontCache[oltId]?.data?.pons?.map(p => p.pon) || [1,2,3,4];
+
+    // El frontend pasa maxPon = mayor PON conocido del caché (ej. 8 para una OLT de 8 puertos)
+    const maxPon = Math.min(parseInt(req.query.maxPon) || 8, 16);
+
     const results = {};
-    await Promise.all(activePons.map(async (ponNum) => {
+    for (let ponNum = 1; ponNum <= maxPon; ponNum++) {
         try {
             const ponId = `0/${ponNum}`;
             const html  = await httpGetOLT(
@@ -1455,11 +1286,100 @@ app.get("/api/authed/:oltId", async (req, res) => {
             authedOnts[oltId][ponNum] = { list, updatedAt: new Date().toISOString() };
         } catch (e) {
             const cached = (authedOnts[oltId] || {})[ponNum];
-            results[ponNum] = cached ? { list: cached.list, total: cached.list.length, cached: true } : { list: [], total: 0, error: e.message };
+            results[ponNum] = cached
+                ? { list: cached.list, total: cached.list.length, cached: true }
+                : { list: [], total: 0, error: e.message };
+            if (ponNum === 1 && !cached) break;
         }
-    }));
+    }
     saveAuthed().catch(() => {});
     res.json({ success: true, pons: results });
+});
+
+// ── API: ONTs intentando (onuAttemptOnuList.asp) ──────────────────────────
+// GET /api/attempt/:oltId  → recorre los PONs reales de la OLT (maxPon del query)
+app.get("/api/attempt/:oltId", async (req, res) => {
+    const oltId  = parseInt(req.params.oltId);
+    const olt    = olts.find(o => o.id === oltId);
+    if (!olt) return res.status(404).json({ success: false, message: "OLT no encontrada" });
+
+    const maxPon = Math.min(parseInt(req.query.maxPon) || 8, 16);
+
+    const results = {};
+    for (let ponNum = 1; ponNum <= maxPon; ponNum++) {
+        try {
+            const ponId = `0/${ponNum}`;
+            const html  = await httpGetOLT(
+                olt.host, olt.user, olt.password,
+                `/onuAttemptOnuList.asp?oltponno=${encodeURIComponent(ponId)}`
+            );
+            const list = parseAttemptList(html);
+            results[ponNum] = { list, total: list.length };
+        } catch (e) {
+            results[ponNum] = { list: [], total: 0, error: e.message };
+            if (ponNum === 1) break;
+        }
+    }
+    res.json({ success: true, pons: results });
+});
+
+// ── API: Eliminar ONT autorizada (goform/deletePonMacAuthedOnu) ────────────
+// DELETE /api/authed/:oltId  body: { onuId, onuMac }
+app.delete("/api/authed/:oltId", async (req, res) => {
+    const oltId = parseInt(req.params.oltId);
+    const olt   = olts.find(o => o.id === oltId);
+    if (!olt) return res.status(404).json({ success: false, message: "OLT no encontrada" });
+
+    const { onuId, onuMac } = req.body;
+    if (!onuId || !onuMac)
+        return res.status(400).json({ success: false, message: "Faltan parámetros: onuId y onuMac son obligatorios" });
+
+    try {
+        const postData = new URLSearchParams({ onuId, onuMac }).toString();
+        const auth     = Buffer.from(`${olt.user}:${olt.password}`).toString("base64");
+        await new Promise((resolve, reject) => {
+            const options = {
+                hostname: olt.host, port: 80,
+                path:    "/goform/deletePonMacAuthedOnu",
+                method:  "POST",
+                headers: {
+                    "Content-Type":   "application/x-www-form-urlencoded",
+                    "Content-Length": Buffer.byteLength(postData),
+                    "Authorization":  `Basic ${auth}`,
+                    "Referer":        `http://${olt.host}/onuMacAuthedOnuList.asp`
+                },
+                timeout: 8000
+            };
+            const req2 = http.request(options, (r) => {
+                let body = "";
+                r.on("data", d => body += d);
+                r.on("end", () => {
+                    console.log(`[deleteAuthed] ${olt.host} onuId=${onuId} onuMac=${onuMac} HTTP ${r.statusCode}`);
+                    resolve({ status: r.statusCode, body });
+                });
+            });
+            req2.on("error", reject);
+            req2.on("timeout", () => { req2.destroy(); reject(new Error("Timeout HTTP goform")); });
+            req2.write(postData);
+            req2.end();
+        });
+
+        // Quitar del caché local de authedOnts
+        if (authedOnts[oltId]) {
+            for (const pon of Object.keys(authedOnts[oltId])) {
+                const entry = authedOnts[oltId][pon];
+                if (entry && entry.list) {
+                    entry.list = entry.list.filter(o => o.onuId !== onuId && o.mac !== onuMac.toUpperCase());
+                }
+            }
+            saveAuthed().catch(() => {});
+        }
+
+        broadcast("ont_authed_deleted", { oltId, onuId, onuMac });
+        res.json({ success: true, message: `ONT ${onuId} (${onuMac}) eliminada de autorizadas` });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
 });
 
 // ── Inicialización ─────────────────────────────────────────────────────────
